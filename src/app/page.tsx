@@ -100,7 +100,7 @@ export default function HomePage() {
       </div>
 
       <h1 className="text-4xl font-extrabold tracking-tight text-white mb-2">
-        Radar Oficial de <span className="text-orange-500">Half-Life 3</span>
+        Radar Black Mesa de <span className="text-orange-500">Half-Life 3</span>
       </h1>
 
       <p className="text-zinc-400 text-sm mb-8">
