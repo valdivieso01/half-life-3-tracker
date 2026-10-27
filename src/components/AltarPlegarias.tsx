@@ -1,30 +1,48 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plegaria } from '@/types/hl3';
+import { Plegaria, RespuestaPlegariasPaginadas } from '@/types/hl3';
+
+const POR_PAGINA = 4;
 
 export function AltarPlegarias() {
   const [plegarias, setPlegarias] = useState<Plegaria[]>([]);
+  const [totalVelas, setTotalVelas] = useState(0);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [cargandoPagina, setCargandoPagina] = useState(false);
+
   const [autor, setAutor] = useState('');
   const [mensaje, setMensaje] = useState('');
   const [enviando, setEnviando] = useState(false);
-
-  // Nuevo estado para mostrar el mensaje de error si el Backend rechaza por IP (403)
   const [errorIp, setErrorIp] = useState('');
 
+  // Función que sincroniza el estado de React con la respuesta paginada del Backend
+  function aplicarRespuestaPaginada(datos: RespuestaPlegariasPaginadas) {
+    setPlegarias(datos.plegarias || []);
+    setTotalVelas(datos.total || 0);
+    setPaginaActual(datos.paginaActual || 1);
+    setTotalPaginas(datos.totalPaginas || 1);
+  }
+
+  // Cada vez que cambia `paginaActual`, pedimos esa página al Backend (?page=X&limit=4)
   useEffect(() => {
-    fetch('/api/plegarias')
+    setCargandoPagina(true);
+    fetch(`/api/plegarias?page=${paginaActual}&limit=${POR_PAGINA}`)
       .then((res) => res.json())
-      .then((datos) => setPlegarias(datos))
-      .catch((err) => console.error('Error cargando plegarias:', err));
-  }, []);
+      .then((datos: RespuestaPlegariasPaginadas) => {
+        aplicarRespuestaPaginada(datos);
+      })
+      .catch((err) => console.error('Error cargando plegarias:', err))
+      .finally(() => setCargandoPagina(false));
+  }, [paginaActual]);
 
   async function prenderVela() {
     if (mensaje.trim() === '') return;
 
     try {
       setEnviando(true);
-      setErrorIp(''); // Limpiamos errores previos
+      setErrorIp('');
 
       const res = await fetch('/api/plegarias', {
         method: 'POST',
@@ -38,12 +56,12 @@ export function AltarPlegarias() {
       const datos = await res.json();
 
       if (!res.ok) {
-        // Si el Backend devolvió 403 (IP repetida), mostramos el error en pantalla
         setErrorIp(datos.error || 'No se pudo enviar la plegaria');
         return;
       }
 
-      setPlegarias(datos);
+      // Al crear una vela nueva, el Backend nos devuelve la página 1 actualizada
+      aplicarRespuestaPaginada(datos);
       setMensaje('');
     } finally {
       setEnviando(false);
@@ -56,25 +74,29 @@ export function AltarPlegarias() {
     const res = await fetch('/api/plegarias', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: idPlegaria }),
+      body: JSON.stringify({ id: idPlegaria, pagina: paginaActual }),
     });
 
     const datos = await res.json();
 
     if (!res.ok) {
-      // Si ya le había dado Amén a este comentario desde su IP, mostramos el error
       setErrorIp(datos.error || 'No puedes votar dos veces');
       return;
     }
 
-    setPlegarias(datos);
+    aplicarRespuestaPaginada(datos);
+  }
+
+  function irAPagina(nuevaPagina: number) {
+    if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+    setPaginaActual(nuevaPagina);
   }
 
   return (
     <section className="mt-14 w-full text-left">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
         <h2 className="text-xl font-bold text-zinc-100">
-          🕯️ Altar de Plegarias a Gabe Newell ({plegarias.length} velas encendidas)
+          🕯️ Altar de Plegarias a Gabe Newell ({totalVelas} velas encendidas)
         </h2>
         <span className="text-xs text-zinc-500">Máx. 1 vela y 1 amén por IP</span>
       </div>
@@ -121,7 +143,8 @@ export function AltarPlegarias() {
         </button>
       </div>
 
-      <div className="space-y-3">
+      {/* Lista de plegarias de la página actual */}
+      <div className={`space-y-3 transition-opacity ${cargandoPagina ? 'opacity-50' : 'opacity-100'}`}>
         {plegarias.map((p) => (
           <div
             key={p.id}
@@ -146,6 +169,42 @@ export function AltarPlegarias() {
             </button>
           </div>
         ))}
+      </div>
+
+      {/* Controles de Paginación */}
+      <div className="mt-6 flex items-center justify-between border-t border-zinc-800/80 pt-4 text-xs text-zinc-400">
+        <button
+          onClick={() => irAPagina(paginaActual - 1)}
+          disabled={paginaActual <= 1 || cargandoPagina}
+          className="bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed border border-zinc-800 text-zinc-200 font-medium px-3.5 py-2 rounded-lg cursor-pointer transition-colors"
+        >
+          ← Anterior
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: totalPaginas }, (_, idx) => idx + 1).map((numPagina) => (
+            <button
+              key={numPagina}
+              onClick={() => irAPagina(numPagina)}
+              disabled={cargandoPagina}
+              className={`w-8 h-8 rounded-lg font-semibold cursor-pointer transition-colors ${
+                numPagina === paginaActual
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800'
+              }`}
+            >
+              {numPagina}
+            </button>
+          ))}
+        </div>
+
+        <button
+          onClick={() => irAPagina(paginaActual + 1)}
+          disabled={paginaActual >= totalPaginas || cargandoPagina}
+          className="bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed border border-zinc-800 text-zinc-200 font-medium px-3.5 py-2 rounded-lg cursor-pointer transition-colors"
+        >
+          Siguiente →
+        </button>
       </div>
     </section>
   );

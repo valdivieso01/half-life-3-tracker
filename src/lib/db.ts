@@ -1,10 +1,10 @@
 import { Pool } from 'pg';
-import { Plegaria } from '@/types/hl3';
+import { Plegaria, RespuestaPlegariasPaginadas } from '@/types/hl3';
 
 /**
  * CAPA DE BASE DE DATOS POSTGRESQL (src/lib/db.ts)
- * - En local: lee DATABASE_URL desde tu `.env.local` (conectándose a tu Docker en localhost:5432)
- * - En Vercel: lee DATABASE_URL inyectado por Vercel (conectándose a Neon Postgres en la nube)
+ * - En local: lee DATABASE_URL desde Docker o `.env.local`
+ * - En Vercel: lee DATABASE_URL inyectado por Vercel (Neon Postgres)
  */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
@@ -71,15 +71,33 @@ export async function incrementarContadorDB(): Promise<number> {
   return res.rows[0].total;
 }
 
-export async function obtenerPlegariasDB(): Promise<Plegaria[]> {
+/**
+ * Obtiene una página de plegarias usando LIMIT y OFFSET en SQL
+ */
+export async function obtenerPlegariasPaginadasDB(
+  pagina = 1,
+  porPagina = 5
+): Promise<RespuestaPlegariasPaginadas> {
   await asegurarTablasPostgres();
-  const res = await pool.query(`
+
+  const paginaSegura = Math.max(1, pagina);
+  const offset = (paginaSegura - 1) * porPagina;
+
+  const conteoRes = await pool.query('SELECT COUNT(*)::int AS total FROM plegarias_hl3');
+  const total = conteoRes.rows[0].total;
+  const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+
+  const res = await pool.query(
+    `
     SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
     FROM plegarias_hl3
-    ORDER BY id DESC;
-  `);
+    ORDER BY id DESC
+    LIMIT $1 OFFSET $2;
+    `,
+    [porPagina, offset]
+  );
 
-  return res.rows.map((f) => ({
+  const plegarias: Plegaria[] = res.rows.map((f) => ({
     id: Number(f.id),
     autor: f.autor,
     mensaje: f.mensaje,
@@ -88,9 +106,53 @@ export async function obtenerPlegariasDB(): Promise<Plegaria[]> {
     ipAutor: f.ip_autor,
     ipsAmen: Array.isArray(f.ips_amen) ? f.ips_amen : [],
   }));
+
+  return {
+    plegarias,
+    total,
+    paginaActual: paginaSegura,
+    totalPaginas,
+  };
 }
 
-export async function crearPlegariaDB(nueva: Plegaria): Promise<Plegaria[]> {
+export async function existePlegariaDeIpDB(ip: string): Promise<boolean> {
+  await asegurarTablasPostgres();
+  const res = await pool.query(
+    'SELECT 1 FROM plegarias_hl3 WHERE ip_autor = $1 LIMIT 1',
+    [ip]
+  );
+  return (res.rowCount ?? 0) > 0;
+}
+
+export async function obtenerPlegariaPorIdDB(id: number): Promise<Plegaria | null> {
+  await asegurarTablasPostgres();
+  const res = await pool.query(
+    `
+    SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
+    FROM plegarias_hl3
+    WHERE id = $1
+    LIMIT 1;
+    `,
+    [id]
+  );
+
+  if (res.rowCount === 0) return null;
+  const f = res.rows[0];
+  return {
+    id: Number(f.id),
+    autor: f.autor,
+    mensaje: f.mensaje,
+    fecha: f.fecha,
+    amenes: Number(f.amenes),
+    ipAutor: f.ip_autor,
+    ipsAmen: Array.isArray(f.ips_amen) ? f.ips_amen : [],
+  };
+}
+
+export async function crearPlegariaDB(
+  nueva: Plegaria,
+  porPagina = 5
+): Promise<RespuestaPlegariasPaginadas> {
   await asegurarTablasPostgres();
   await pool.query(
     `
@@ -108,14 +170,17 @@ export async function crearPlegariaDB(nueva: Plegaria): Promise<Plegaria[]> {
     ]
   );
 
-  return obtenerPlegariasDB();
+  // Al crear una nueva plegaria, devolvemos la página 1 (donde aparece primera)
+  return obtenerPlegariasPaginadasDB(1, porPagina);
 }
 
 export async function registrarAmenDB(
   id: number,
   nuevosAmenes: number,
-  nuevasIpsAmen: string[]
-): Promise<Plegaria[]> {
+  nuevasIpsAmen: string[],
+  paginaActual = 1,
+  porPagina = 5
+): Promise<RespuestaPlegariasPaginadas> {
   await asegurarTablasPostgres();
   await pool.query(
     `
@@ -127,5 +192,5 @@ export async function registrarAmenDB(
     [nuevosAmenes, JSON.stringify(nuevasIpsAmen), id]
   );
 
-  return obtenerPlegariasDB();
+  return obtenerPlegariasPaginadasDB(paginaActual, porPagina);
 }

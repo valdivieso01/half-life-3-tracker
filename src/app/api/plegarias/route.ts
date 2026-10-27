@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
 import { Plegaria } from '@/types/hl3';
 import {
-  obtenerPlegariasDB,
+  obtenerPlegariasPaginadasDB,
+  existePlegariaDeIpDB,
+  obtenerPlegariaPorIdDB,
   crearPlegariaDB,
   registrarAmenDB,
 } from '@/lib/db';
+
+const POR_PAGINA_DEFAULT = 4;
 
 function obtenerIpCliente(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -14,9 +18,13 @@ function obtenerIpCliente(request: Request): string {
   return request.headers.get('x-real-ip') || '127.0.0.1';
 }
 
-export async function GET() {
-  const plegarias = await obtenerPlegariasDB();
-  return NextResponse.json(plegarias);
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const pagina = Number(searchParams.get('page')) || 1;
+  const porPagina = Number(searchParams.get('limit')) || POR_PAGINA_DEFAULT;
+
+  const resultado = await obtenerPlegariasPaginadasDB(pagina, porPagina);
+  return NextResponse.json(resultado);
 }
 
 export async function POST(request: Request) {
@@ -33,9 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const plegariasActuales = await obtenerPlegariasDB();
-
-    const yaComentoEstaIp = plegariasActuales.some((p) => p.ipAutor === ip);
+    const yaComentoEstaIp = await existePlegariaDeIpDB(ip);
     if (yaComentoEstaIp) {
       return NextResponse.json(
         {
@@ -59,7 +65,7 @@ export async function POST(request: Request) {
       ipsAmen: [],
     };
 
-    const actualizadas = await crearPlegariaDB(nuevaPlegaria);
+    const actualizadas = await crearPlegariaDB(nuevaPlegaria, POR_PAGINA_DEFAULT);
     return NextResponse.json(actualizadas, { status: 201 });
   } catch (error) {
     console.error('Error guardando plegaria:', error);
@@ -73,10 +79,9 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const ip = obtenerIpCliente(request);
-    const { id } = await request.json();
-    const plegariasActuales = await obtenerPlegariasDB();
+    const { id, pagina } = await request.json();
 
-    const plegariaObjetivo = plegariasActuales.find((p) => p.id === id);
+    const plegariaObjetivo = await obtenerPlegariaPorIdDB(Number(id));
     if (!plegariaObjetivo) {
       return NextResponse.json(
         { error: 'Plegaria no encontrada' },
@@ -97,7 +102,13 @@ export async function PATCH(request: Request) {
     const nuevosAmenes = (plegariaObjetivo.amenes || 0) + 1;
     const nuevasIps = [...ipsQueDieronAmen, ip];
 
-    const actualizadas = await registrarAmenDB(id, nuevosAmenes, nuevasIps);
+    const actualizadas = await registrarAmenDB(
+      Number(id),
+      nuevosAmenes,
+      nuevasIps,
+      Number(pagina) || 1,
+      POR_PAGINA_DEFAULT
+    );
     return NextResponse.json(actualizadas);
   } catch (error) {
     console.error('Error sumando amén:', error);

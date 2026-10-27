@@ -24,3 +24,10 @@ export interface Plegaria {
   ipAutor?: string;
   ipsAmen?: string[];
 }
+
+export interface RespuestaPlegariasPaginadas {
+  plegarias: Plegaria[];
+  total: number;
+  paginaActual: number;
+  totalPaginas: number;
+}
