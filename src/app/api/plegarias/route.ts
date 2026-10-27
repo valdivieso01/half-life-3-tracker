@@ -32,12 +32,19 @@ export async function POST(request: Request) {
   try {
     const ip = obtenerIpCliente(request);
     const body = await request.json();
-    const autor = (body.autor || 'Anónimo de Ciudad 17').trim();
+    const esIngles = body.lang === 'en';
+    const autor = (
+      body.autor || (esIngles ? 'City 17 Anonymous' : 'Anónimo de Ciudad 17')
+    ).trim();
     const mensaje = (body.mensaje || '').trim();
 
     if (!mensaje) {
       return NextResponse.json(
-        { error: 'El mensaje no puede estar vacío.' },
+        {
+          error: esIngles
+            ? 'The prayer message cannot be empty.'
+            : 'El mensaje no puede estar vacío.',
+        },
         { status: 400 }
       );
     }
@@ -46,7 +53,9 @@ export async function POST(request: Request) {
     if (yaComentoEstaIp) {
       return NextResponse.json(
         {
-          error: `⛔ Ya encendiste tu vela desde esta IP (${ip}). Solo se permite 1 plegaria por persona.`,
+          error: esIngles
+            ? `⛔ You already lit your candle from this IP (${ip}). Only 1 prayer per person is allowed.`
+            : `⛔ Ya encendiste tu vela desde esta IP (${ip}). Solo se permite 1 plegaria por persona.`,
         },
         { status: 403 }
       );
@@ -56,7 +65,7 @@ export async function POST(request: Request) {
       id: Date.now(),
       autor,
       mensaje,
-      fecha: new Date().toLocaleDateString('es-AR', {
+      fecha: new Date().toLocaleDateString(esIngles ? 'en-US' : 'es-AR', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
@@ -80,12 +89,13 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const ip = obtenerIpCliente(request);
-    const { id, pagina, busquedaAutor } = await request.json();
+    const { id, pagina, busquedaAutor, lang } = await request.json();
+    const esIngles = lang === 'en';
 
     const plegariaObjetivo = await obtenerPlegariaPorIdDB(Number(id));
     if (!plegariaObjetivo) {
       return NextResponse.json(
-        { error: 'Plegaria no encontrada' },
+        { error: esIngles ? 'Prayer not found' : 'Plegaria no encontrada' },
         { status: 404 }
       );
     }
@@ -94,7 +104,9 @@ export async function PATCH(request: Request) {
     if (ipsQueDieronAmen.includes(ip)) {
       return NextResponse.json(
         {
-          error: `🙏 Ya le diste Amén a la plegaria de "${plegariaObjetivo.autor}".`,
+          error: esIngles
+            ? `🙏 You already gave an Amen to "${plegariaObjetivo.autor}"'s prayer.`
+            : `🙏 Ya le diste Amén a la plegaria de "${plegariaObjetivo.autor}".`,
         },
         { status: 403 }
       );

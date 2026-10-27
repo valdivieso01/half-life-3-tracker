@@ -12,18 +12,24 @@ const URL_SITIO = 'https://www.radarblackmesa.online';
  */
 export const metadata: Metadata = {
   metadataBase: new URL(URL_SITIO),
-  title: '¿Ya salió Half-Life 3? | Radar Black Mesa y Noticias en Vivo',
+  title: '¿Ya salió Half-Life 3? / Is Half-Life 3 Out Yet? | Radar Black Mesa',
   description:
-    'Verificador en tiempo real contra la API de Steam para saber si ya salió Half-Life 3, contador de días desde Episode Two (2007), últimos rumores y el Altar de Plegarias a Gabe Newell.',
+    'Verificador en tiempo real contra Steam para saber si ya salió Half-Life 3, noticias diarias y Altar de Plegarias a Gabe Newell. Live Steam checker, daily Half-Life 3 rumors & Gabe Newell Prayer Altar.',
   keywords: [
     'ya salio half life 3',
     'cuando sale half life 3',
     'half life 3 noticias',
     'half life 3 rumores',
-    'half life 3 steam',
+    'is half life 3 out yet',
+    'half life 3 release date',
+    'half life 3 news',
+    'half life 3 rumors',
+    'half life 3 steam tracker',
     'radar black mesa',
+    'black mesa radar',
     'gabe newell half life 3',
     'project white sands valve',
+    'hlx valve',
   ],
   authors: [{ name: 'Javier - Radar Black Mesa' }],
   alternates: {
@@ -80,6 +86,14 @@ export default function RootLayout({
         acceptedAnswer: {
           '@type': 'Answer',
           text: 'Half-Life 2: Episode Two se lanzó el 10 de octubre de 2007. La comunidad lleva más de 18 años esperando la continuación directa de la historia de Gordon Freeman.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Is Half-Life 3 out yet on Steam?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Not yet. Black Mesa Radar checks the Steam store API daily for Half-Life 3, aggregates the latest daily rumors and news in English and Spanish, and hosts the Gabe Newell Prayer Altar.',
         },
       },
     ],

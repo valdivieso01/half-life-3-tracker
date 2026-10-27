@@ -1,10 +1,14 @@
 import { NoticiaHL3 } from '@/types/hl3';
+import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 interface TarjetaNoticiaProps {
   noticia: NoticiaHL3;
+  idioma?: Idioma;
 }
 
-export function TarjetaNoticia({ noticia }: TarjetaNoticiaProps) {
+export function TarjetaNoticia({ noticia, idioma = 'es' }: TarjetaNoticiaProps) {
+  const t = TRADUCCIONES[idioma];
+
   return (
     <a
       href={noticia.link}
@@ -23,7 +27,7 @@ export function TarjetaNoticia({ noticia }: TarjetaNoticiaProps) {
       </div>
 
       <span className="text-xs text-zinc-500 mt-4 inline-block">
-        Leer nota completa →
+        {t.leerNotaCompleta}
       </span>
     </a>
   );

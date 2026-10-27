@@ -24,6 +24,8 @@ function obtenerIpCliente(request: Request): string {
 
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const esIngles = searchParams.get('lang') === 'en';
     const ip = obtenerIpCliente(request);
     const ahora = Date.now();
 
@@ -36,7 +38,9 @@ export async function GET(request: Request) {
       );
       return NextResponse.json(
         {
-          error: `⚠️ Calma Freeman: espera ${segundosRestantes}s antes de volver a escanear los servidores.`,
+          error: esIngles
+            ? `⚠️ Easy there, Freeman: wait ${segundosRestantes}s before scanning the servers again.`
+            : `⚠️ Calma Freeman: espera ${segundosRestantes}s antes de volver a escanear los servidores.`,
         },
         { status: 429 }
       );

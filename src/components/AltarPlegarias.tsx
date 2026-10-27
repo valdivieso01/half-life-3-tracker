@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Plegaria, RespuestaPlegariasPaginadas } from '@/types/hl3';
+import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 const POR_PAGINA = 4;
 
-export function AltarPlegarias() {
+interface AltarPlegariasProps {
+  idioma?: Idioma;
+}
+
+export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
+  const t = TRADUCCIONES[idioma];
   const [plegarias, setPlegarias] = useState<Plegaria[]>([]);
   const [totalVelas, setTotalVelas] = useState(0);
   const [paginaActual, setPaginaActual] = useState(1);
@@ -71,8 +77,9 @@ export function AltarPlegarias() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          autor: autor.trim() || 'Ciudadano Anónimo',
+          autor: autor.trim() || t.apodoAnonimo,
           mensaje: mensaje.trim(),
+          lang: idioma,
         }),
       });
 
@@ -103,6 +110,7 @@ export function AltarPlegarias() {
         id: idPlegaria,
         pagina: paginaActual,
         busquedaAutor: filtroAutorActivo,
+        lang: idioma,
       }),
     });
 
@@ -125,8 +133,9 @@ export function AltarPlegarias() {
     <section className="mt-14 w-full text-left">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
         <h2 className="text-xl font-bold text-zinc-100">
-          🕯️ Altar de Plegarias a Gabe Newell ({totalVelas} velas encendidas)
+          {t.altarTitulo(totalVelas)}
         </h2>
+        <span className="text-xs text-zinc-500">{t.altarReglaIp}</span>
       </div>
 
       {/* Alerta roja cuando el Backend bloquea por IP repetida */}
@@ -145,7 +154,7 @@ export function AltarPlegarias() {
       <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 mb-4 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
-          placeholder="Tu apodo (ej. Freeman)"
+          placeholder={t.placeholderApodo}
           value={autor}
           onChange={(e) => setAutor(e.target.value)}
           className="sm:w-48 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
@@ -153,7 +162,7 @@ export function AltarPlegarias() {
 
         <input
           type="text"
-          placeholder="Escribe tu plegaria o promesa si sale Half-Life 3..."
+          placeholder={t.placeholderMensaje}
           value={mensaje}
           onChange={(e) => setMensaje(e.target.value)}
           onKeyDown={(e) => {
@@ -167,7 +176,7 @@ export function AltarPlegarias() {
           disabled={enviando}
           className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2 rounded-lg cursor-pointer whitespace-nowrap"
         >
-          {enviando ? 'Prendiendo...' : '🕯️ Prender vela'}
+          {enviando ? t.botonPrendiendo : t.botonPrenderVela}
         </button>
       </div>
 
@@ -176,7 +185,7 @@ export function AltarPlegarias() {
         <div className="relative flex-1">
           <input
             type="text"
-            placeholder="🔍 Buscar plegarias por nombre de usuario (ej. Javier)..."
+            placeholder={t.placeholderBuscarUsuario}
             value={textoBusqueda}
             onChange={(e) => setTextoBusqueda(e.target.value)}
             onKeyDown={(e) => {
@@ -192,7 +201,7 @@ export function AltarPlegarias() {
             disabled={cargandoPagina}
             className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs px-4 py-2 rounded-lg border border-zinc-700 cursor-pointer transition-colors whitespace-nowrap"
           >
-            Buscar usuario
+            {t.botonBuscarUsuario}
           </button>
 
           {filtroAutorActivo && (
@@ -200,7 +209,7 @@ export function AltarPlegarias() {
               onClick={limpiarBusqueda}
               className="bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 font-semibold text-xs px-3 py-2 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
             >
-              ✕ Ver todos
+              {t.botonVerTodos}
             </button>
           )}
         </div>
@@ -210,7 +219,7 @@ export function AltarPlegarias() {
       <div className={`space-y-3 transition-opacity ${cargandoPagina ? 'opacity-50' : 'opacity-100'}`}>
         {plegarias.length === 0 ? (
           <div className="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6 text-center text-sm text-zinc-500">
-            No se encontraron plegarias del usuario{' '}
+            {t.sinResultadosUsuario}{' '}
             <strong className="text-zinc-300">&quot;{filtroAutorActivo}&quot;</strong>.
           </div>
         ) : (
@@ -234,7 +243,7 @@ export function AltarPlegarias() {
                 onClick={() => darAmen(p.id)}
                 className="bg-zinc-800 hover:bg-orange-500/20 hover:text-orange-400 border border-zinc-700 hover:border-orange-500/40 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
               >
-                🙏 Amén ({p.amenes || 0})
+                {t.botonAmen} ({p.amenes || 0})
               </button>
             </div>
           ))
@@ -248,7 +257,7 @@ export function AltarPlegarias() {
           disabled={paginaActual <= 1 || cargandoPagina}
           className="bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed border border-zinc-800 text-zinc-200 font-medium px-3.5 py-2 rounded-lg cursor-pointer transition-colors"
         >
-          ← Anterior
+          {t.paginacionAnterior}
         </button>
 
         <div className="flex items-center gap-1.5">
@@ -273,7 +282,7 @@ export function AltarPlegarias() {
           disabled={paginaActual >= totalPaginas || cargandoPagina}
           className="bg-zinc-900 hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed border border-zinc-800 text-zinc-200 font-medium px-3.5 py-2 rounded-lg cursor-pointer transition-colors"
         >
-          Siguiente →
+          {t.paginacionSiguiente}
         </button>
       </div>
     </section>

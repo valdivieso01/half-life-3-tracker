@@ -4,34 +4,17 @@ import { useState, useEffect } from 'react';
 import { NoticiaHL3, RespuestaSteam } from '@/types/hl3';
 import { TarjetaNoticia } from '@/components/TarjetaNoticia';
 import { AltarPlegarias } from '@/components/AltarPlegarias';
-
-const EXCUSAS_GABE = [
-  'Gabe Newell estaba por subir el juego pero se distrajo contando billetes de las rebajas de Steam.',
-  'En los teclados de las oficinas de Valve la tecla entre el 2 y el 4 fue reemplazada por "Alyx".',
-  'Gordon Freeman perdió la palanca en una mudanza y no pueden arrancar el capítulo 1.',
-  'Estaban compilando los shaders pero un Headcrab se metió en el rack del servidor.',
-  'Valve confirma que primero lanzarán Counter-Strike 2: Episode Two antes de llegar al 3.',
-  'El G-Man puso el repositorio de Git en éxtasis temporal indefinido.',
-  'Gabe Newell intentó escribir "3" en el título del proyecto y Windows le tiró pantallazo azul.',
-  'Todavía están diseñando gorros nuevos para Team Fortress 2, prioridad absoluta.',
-  'El motor Source 3 cobró conciencia propia y pidió trabajar remoto desde Xen.',
-  'Barney todavía le debe aquella cerveza a Gordon y hasta que no la pague no arranca la historia.',
-  'Se quedaron sin presupuesto después de modelar en 8K cada pelo de la barba de Eli Vance.',
-  'El científico que sabía la contraseña del servidor de producción se jubiló en 2011.',
-  'Intentaron usar IA para terminar el guion, pero la IA tampoco supo contar hasta 3.',
-  'Gabe dijo que por cada vez que alguien pregunte "¿cuándo sale?", lo retrasa un mes más. Ya vamos por el año 2490.',
-  'Estaban listos para lanzarlo hoy, pero decidieron rehacer el motor gráfico desde cero por séptima vez.',
-  'La Alianza (Combine) bloqueó el puerto 443 de las oficinas de Valve.',
-  'Primero tienen que sacar la Steam Deck 2, la Steam Deck 2: Episode One y la Steam Deck: Alyx.',
-  'El carrito con el cristal de pruebas se trabó en el sector C de Black Mesa.',
-];
+import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 export default function HomePage() {
+  const [idioma, setIdioma] = useState<Idioma>('es');
+  const t = TRADUCCIONES[idioma];
+
   const [resultado, setResultado] = useState<RespuestaSteam | null>(null);
   const [consultando, setConsultando] = useState(false);
-  const [excusaActual, setExcusaActual] = useState('');
+  const [indiceExcusa, setIndiceExcusa] = useState(0);
 
-  // NUEVO: Segundos de enfriamiento (Cooldown) para evitar spam al botón
+  // Segundos de enfriamiento (Cooldown) para evitar spam al botón
   const [enfriamiento, setEnfriamiento] = useState(0);
   const [errorSpam, setErrorSpam] = useState('');
 
@@ -43,10 +26,19 @@ export default function HomePage() {
     (Date.now() - fechaEpisodeTwo) / (1000 * 60 * 60 * 24)
   );
 
+  // Detectar idioma del navegador al entrar por primera vez
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.language?.toLowerCase().startsWith('en')) {
+      setIdioma('en');
+    }
+  }, []);
+
+  // Recargar noticias en el idioma seleccionado (ES o EN)
   useEffect(() => {
     async function cargarNoticias() {
+      setCargandoNoticias(true);
       try {
-        const res = await fetch('/api/noticias');
+        const res = await fetch(`/api/noticias?lang=${idioma}`);
         const datos = await res.json();
         setNoticias(datos);
       } catch (err) {
@@ -56,9 +48,9 @@ export default function HomePage() {
       }
     }
     cargarNoticias();
-  }, []);
+  }, [idioma]);
 
-  // NUEVO: useEffect que descuenta 1 segundo cada 1000ms cuando `enfriamiento > 0`
+  // Descuenta 1 segundo cada 1000ms cuando `enfriamiento > 0`
   useEffect(() => {
     if (enfriamiento <= 0) return;
 
@@ -73,40 +65,69 @@ export default function HomePage() {
     setConsultando(true);
     setErrorSpam('');
 
-    const res = await fetch('/api/steam');
+    const res = await fetch(`/api/steam?lang=${idioma}`);
     const datos = await res.json();
 
     if (!res.ok) {
-      // Si el Backend devuelve 429 (Too Many Requests)
-      setErrorSpam(datos.error || 'Espera unos segundos antes de volver a consultar.');
+      setErrorSpam(datos.error || t.errorSpamDefault);
       setConsultando(false);
       return;
     }
 
     setResultado(datos);
 
-    const indiceAzar = Math.floor(Math.random() * EXCUSAS_GABE.length);
-    setExcusaActual(EXCUSAS_GABE[indiceAzar]);
+    const indiceAzar = Math.floor(Math.random() * t.excusasGabe.length);
+    setIndiceExcusa(indiceAzar);
 
     // Activamos la cuenta regresiva de 10 segundos en el botón
     setEnfriamiento(10);
     setConsultando(false);
   }
 
+  const excusaActual = t.excusasGabe[indiceExcusa] || t.excusasGabe[0];
+
   return (
-    <main className="min-h-screen max-w-4xl mx-auto flex flex-col items-center py-12 px-6 text-center">
+    <main className="min-h-screen max-w-4xl mx-auto flex flex-col items-center py-8 px-6 text-center">
+      {/* Selector de idioma ES / EN */}
+      <div className="w-full flex justify-end mb-4">
+        <div className="inline-flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
+          <button
+            onClick={() => setIdioma('es')}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
+              idioma === 'es'
+                ? 'bg-orange-600 text-white'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            🇪🇸 ES
+          </button>
+          <button
+            onClick={() => setIdioma('en')}
+            className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
+              idioma === 'en'
+                ? 'bg-orange-600 text-white'
+                : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            🇺🇸 EN
+          </button>
+        </div>
+      </div>
+
       <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-4xl font-bold text-orange-500 mb-4 shadow-lg shadow-orange-500/10">
         λ
       </div>
 
       <h1 className="text-4xl font-extrabold tracking-tight text-white mb-2">
-        Radar Black Mesa de <span className="text-orange-500">Half-Life 3</span>
+        {t.tituloPrincipal} <span className="text-orange-500">Half-Life 3</span>
       </h1>
 
       <p className="text-zinc-400 text-sm mb-8">
-        Llevamos{' '}
-        <strong className="text-orange-400 font-bold">{diasEsperando} días</strong>{' '}
-        esperando desde <em>Half-Life 2: Episode Two</em> (2007)
+        {t.diasEsperandoPrefijo}{' '}
+        <strong className="text-orange-400 font-bold">
+          {diasEsperando} {t.diasPalabra}
+        </strong>{' '}
+        {t.diasEsperandoSufijo} <em>Half-Life 2: Episode Two</em> (2007)
       </p>
 
       {/* El botón queda deshabilitado mientras consulta O mientras `enfriamiento > 0` */}
@@ -116,10 +137,10 @@ export default function HomePage() {
         className="bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-400 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg cursor-pointer disabled:cursor-not-allowed transition-all"
       >
         {consultando
-          ? '📡 Verificando...'
+          ? t.botonVerificando
           : enfriamiento > 0
-            ? `⏳ Enfriando reactor de Black Mesa (${enfriamiento}s)...`
-            : 'λ ¿YA SALIÓ HALF-LIFE 3?'}
+            ? t.botonEnfriando(enfriamiento)
+            : t.botonPreguntar}
       </button>
 
       {errorSpam && (
@@ -138,12 +159,12 @@ export default function HomePage() {
             }`}
           >
             {resultado.desdeCache
-              ? `⚡ Consultado hoy a las ${resultado.horaConsulta}`
-              : `🌐 Consultado en vivo a Steam hoy a las ${resultado.horaConsulta}`}
+              ? t.badgeCache(resultado.horaConsulta)
+              : t.badgeVivo(resultado.horaConsulta)}
           </span>
 
           <p className="text-4xl font-black text-red-500 mb-2">
-            {resultado.salio ? '¡SÍ!' : 'NO.'}
+            {resultado.salio ? t.respuestaSi : t.respuestaNo}
           </p>
 
           <p className="text-zinc-200 font-medium mb-4 italic">
@@ -151,16 +172,14 @@ export default function HomePage() {
           </p>
 
           <div className="text-left border-t border-zinc-800 pt-4">
-            <p className="text-xs text-zinc-500 mb-2">
-              Lo único que devuelve Steam hoy cuando buscas &quot;Half-Life 3&quot;:
-            </p>
+            <p className="text-xs text-zinc-500 mb-2">{t.loQueHayEnSteam}</p>
             <ul className="text-xs text-zinc-400 space-y-1 mb-4">
               {resultado.loQueSiHayEnSteam.map((juego) => (
                 <li key={juego.id}>• {juego.nombre}</li>
               ))}
             </ul>
             <p className="text-xs text-orange-400">
-              🔥 Total de veces que la humanidad preguntó: {resultado.totalConsultas}
+              {t.totalConsultas} {resultado.totalConsultas}
             </p>
           </div>
         </div>
@@ -168,24 +187,22 @@ export default function HomePage() {
 
       <section className="mt-14 w-full text-left">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
-          <h2 className="text-xl font-bold text-zinc-100">
-            📰 Últimos Rumores y Noticias de Half-Life 3
-          </h2>
-          <span className="text-xs text-zinc-500">Actualizado 1 vez al día</span>
+          <h2 className="text-xl font-bold text-zinc-100">{t.tituloNoticias}</h2>
+          <span className="text-xs text-zinc-500">{t.actualizadoDiario}</span>
         </div>
 
         {cargandoNoticias ? (
-          <p className="text-zinc-500 text-sm">Buscando rumores en la red...</p>
+          <p className="text-zinc-500 text-sm">{t.buscandoNoticias}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {noticias.map((noticia, index) => (
-              <TarjetaNoticia key={index} noticia={noticia} />
+              <TarjetaNoticia key={index} noticia={noticia} idioma={idioma} />
             ))}
           </div>
         )}
       </section>
 
-      <AltarPlegarias />
+      <AltarPlegarias idioma={idioma} />
     </main>
   );
 }
