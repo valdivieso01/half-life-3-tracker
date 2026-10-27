@@ -3,7 +3,7 @@ import { Analytics } from '@vercel/analytics/next';
 // @ts-ignore -- CSS modules are provided by the Next.js build pipeline.
 import './globals.css';
 
-const URL_SITIO = 'https://radarblackmesa.vercel.app';
+const URL_SITIO = 'https://www.radarblackmesa.online';
 
 /**
  * METADATA SEO DE NEXT.JS (src/app/layout.tsx)

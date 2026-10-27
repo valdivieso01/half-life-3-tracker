@@ -11,7 +11,7 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: '/api/',
     },
-    sitemap: 'https://radarblackmesa.vercel.app/sitemap.xml',
+    sitemap: 'https://www.radarblackmesa.online/sitemap.xml',
   };
 }
 

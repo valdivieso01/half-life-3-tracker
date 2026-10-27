@@ -127,7 +127,6 @@ export function AltarPlegarias() {
         <h2 className="text-xl font-bold text-zinc-100">
           🕯️ Altar de Plegarias a Gabe Newell ({totalVelas} velas encendidas)
         </h2>
-        <span className="text-xs text-zinc-500">Máx. 1 vela y 1 amén por IP</span>
       </div>
 
       {/* Alerta roja cuando el Backend bloquea por IP repetida */}
