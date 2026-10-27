@@ -4,31 +4,13 @@ import path from 'node:path';
 import os from 'node:os';
 import { Plegaria } from '@/types/hl3';
 
-const CARPETA_DATOS = process.env.VERCEL ? os.tmpdir() : process.cwd();
-const ARCHIVO_PLEGARIAS = path.join(CARPETA_DATOS, 'plegarias.json');
+// Archivo original subido a tu repositorio de GitHub (con tus datos iniciales)
+const ARCHIVO_SEMILLA_REPO = path.join(process.cwd(), 'plegarias.json');
 
-const PLEGARIAS_INICIALES: Plegaria[] = [
-  {
-    id: 1,
-    autor: 'Gordon_99',
-    mensaje: 'Gabe por favor lánzalo antes de que me jubile, tengo la palanca lista desde 2007.',
-    fecha: '26 oct 2026',
-    amenes: 3,
-    ipAutor: '192.168.1.100',
-    ipsAmen: [],
-  },
-  {
-    id: 2,
-    autor: 'CientificoBlackMesa',
-    mensaje: 'Prometo no volver a meter cristales raros en el espectrómetro antimateria si sale este año.',
-    fecha: '26 oct 2026',
-    amenes: 7,
-    ipAutor: '192.168.1.101',
-    ipsAmen: [],
-  },
-];
+// Donde se guardan las nuevas plegarias en tiempo de ejecución (/tmp en Vercel, raíz en local)
+const CARPETA_ESCRITURA = process.env.VERCEL ? os.tmpdir() : process.cwd();
+const ARCHIVO_PLEGARIAS = path.join(CARPETA_ESCRITURA, 'plegarias.json');
 
-// Extrae la IP del usuario desde las cabeceras HTTP de la petición
 function obtenerIpCliente(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
   if (forwarded) {
@@ -39,15 +21,18 @@ function obtenerIpCliente(request: Request): string {
 
 async function leerPlegariasDeDisco(): Promise<Plegaria[]> {
   try {
+    // 1. Intentamos leer el archivo activo (/tmp/plegarias.json en Vercel o ./plegarias.json en local)
     const contenido = await fs.readFile(ARCHIVO_PLEGARIAS, 'utf-8');
     return JSON.parse(contenido);
   } catch {
-    await fs.writeFile(
-      ARCHIVO_PLEGARIAS,
-      JSON.stringify(PLEGARIAS_INICIALES, null, 2),
-      'utf-8'
-    );
-    return PLEGARIAS_INICIALES;
+    // 2. Si en Vercel /tmp/plegarias.json aún no existe, leemos el plegarias.json que subiste a GitHub
+    try {
+      const semilla = await fs.readFile(ARCHIVO_SEMILLA_REPO, 'utf-8');
+      await fs.writeFile(ARCHIVO_PLEGARIAS, semilla, 'utf-8');
+      return JSON.parse(semilla);
+    } catch {
+      return [];
+    }
   }
 }
 
@@ -72,7 +57,6 @@ export async function POST(request: Request) {
 
     const plegariasActuales = await leerPlegariasDeDisco();
 
-    // REGLA 1: Solo 1 comentario/plegaria por IP
     const yaComentoEstaIp = plegariasActuales.some((p) => p.ipAutor === ip);
     if (yaComentoEstaIp) {
       return NextResponse.json(
@@ -128,7 +112,6 @@ export async function PATCH(request: Request) {
       );
     }
 
-    // REGLA 2: Solo 1 Amén por comentario por IP
     const ipsQueDieronAmen = plegariaObjetivo.ipsAmen || [];
     if (ipsQueDieronAmen.includes(ip)) {
       return NextResponse.json(

@@ -18,6 +18,9 @@ let contadorEnMemoria = 0;
 const ultimaConsultaPorIp: Record<string, number> = {};
 const TIEMPO_COOLDOWN_MS = 10 * 1000; // 10 segundos entre consultas por IP
 
+// Archivo original en el repositorio
+const ARCHIVO_SEMILLA_CONTADOR = path.join(process.cwd(), 'contador.json');
+
 // En la nube (Vercel) usamos /tmp porque la raíz es de solo lectura; en local usamos la raíz
 const CARPETA_DATOS = process.env.VERCEL ? os.tmpdir() : process.cwd();
 const ARCHIVO_CONTADOR = path.join(CARPETA_DATOS, 'contador.json');
@@ -38,7 +41,13 @@ async function sumarConsultaEnArchivo(): Promise<number> {
     const json = JSON.parse(contenido);
     total = json.totalConsultas || 0;
   } catch {
-    total = 0;
+    try {
+      const semilla = await fs.readFile(ARCHIVO_SEMILLA_CONTADOR, 'utf-8');
+      const jsonSemilla = JSON.parse(semilla);
+      total = jsonSemilla.totalConsultas || 0;
+    } catch {
+      total = 0;
+    }
   }
 
   const nuevoTotal = Math.max(total, contadorEnMemoria) + 1;
