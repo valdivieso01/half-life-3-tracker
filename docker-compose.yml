@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hl3-postgres-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: hl3_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - hl3_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d hl3_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: hl3-nextjs-local
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Dentro de la red interna de Docker, el host es el nombre del servicio ("postgres")
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/hl3_db
+      # Necesario en Windows + Docker para que el Hot Reload detecte cambios de archivos al instante
+      WATCHPACK_POLLING: "true"
+    volumes:
+      # Montamos la carpeta src para tener Hot Reload en vivo sin pisar el node_modules de Linux
+      - ./src:/app/src
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  hl3_pgdata:

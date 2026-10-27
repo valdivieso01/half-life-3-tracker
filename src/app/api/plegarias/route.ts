@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
-import fs from 'node:fs/promises';
-import path from 'node:path';
-import os from 'node:os';
 import { Plegaria } from '@/types/hl3';
-
-// Archivo original subido a tu repositorio de GitHub (con tus datos iniciales)
-const ARCHIVO_SEMILLA_REPO = path.join(process.cwd(), 'plegarias.json');
-
-// Donde se guardan las nuevas plegarias en tiempo de ejecución (/tmp en Vercel, raíz en local)
-const CARPETA_ESCRITURA = process.env.VERCEL ? os.tmpdir() : process.cwd();
-const ARCHIVO_PLEGARIAS = path.join(CARPETA_ESCRITURA, 'plegarias.json');
+import {
+  obtenerPlegariasDB,
+  crearPlegariaDB,
+  registrarAmenDB,
+} from '@/lib/db';
 
 function obtenerIpCliente(request: Request): string {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -19,25 +14,8 @@ function obtenerIpCliente(request: Request): string {
   return request.headers.get('x-real-ip') || '127.0.0.1';
 }
 
-async function leerPlegariasDeDisco(): Promise<Plegaria[]> {
-  try {
-    // 1. Intentamos leer el archivo activo (/tmp/plegarias.json en Vercel o ./plegarias.json en local)
-    const contenido = await fs.readFile(ARCHIVO_PLEGARIAS, 'utf-8');
-    return JSON.parse(contenido);
-  } catch {
-    // 2. Si en Vercel /tmp/plegarias.json aún no existe, leemos el plegarias.json que subiste a GitHub
-    try {
-      const semilla = await fs.readFile(ARCHIVO_SEMILLA_REPO, 'utf-8');
-      await fs.writeFile(ARCHIVO_PLEGARIAS, semilla, 'utf-8');
-      return JSON.parse(semilla);
-    } catch {
-      return [];
-    }
-  }
-}
-
 export async function GET() {
-  const plegarias = await leerPlegariasDeDisco();
+  const plegarias = await obtenerPlegariasDB();
   return NextResponse.json(plegarias);
 }
 
@@ -55,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const plegariasActuales = await leerPlegariasDeDisco();
+    const plegariasActuales = await obtenerPlegariasDB();
 
     const yaComentoEstaIp = plegariasActuales.some((p) => p.ipAutor === ip);
     if (yaComentoEstaIp) {
@@ -81,13 +59,7 @@ export async function POST(request: Request) {
       ipsAmen: [],
     };
 
-    const actualizadas = [nuevaPlegaria, ...plegariasActuales];
-    await fs.writeFile(
-      ARCHIVO_PLEGARIAS,
-      JSON.stringify(actualizadas, null, 2),
-      'utf-8'
-    );
-
+    const actualizadas = await crearPlegariaDB(nuevaPlegaria);
     return NextResponse.json(actualizadas, { status: 201 });
   } catch (error) {
     console.error('Error guardando plegaria:', error);
@@ -102,7 +74,7 @@ export async function PATCH(request: Request) {
   try {
     const ip = obtenerIpCliente(request);
     const { id } = await request.json();
-    const plegariasActuales = await leerPlegariasDeDisco();
+    const plegariasActuales = await obtenerPlegariasDB();
 
     const plegariaObjetivo = plegariasActuales.find((p) => p.id === id);
     if (!plegariaObjetivo) {
@@ -122,22 +94,10 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const actualizadas = plegariasActuales.map((p) =>
-      p.id === id
-        ? {
-            ...p,
-            amenes: (p.amenes || 0) + 1,
-            ipsAmen: [...(p.ipsAmen || []), ip],
-          }
-        : p
-    );
+    const nuevosAmenes = (plegariaObjetivo.amenes || 0) + 1;
+    const nuevasIps = [...ipsQueDieronAmen, ip];
 
-    await fs.writeFile(
-      ARCHIVO_PLEGARIAS,
-      JSON.stringify(actualizadas, null, 2),
-      'utf-8'
-    );
-
+    const actualizadas = await registrarAmenDB(id, nuevosAmenes, nuevasIps);
     return NextResponse.json(actualizadas);
   } catch (error) {
     console.error('Error sumando amén:', error);
