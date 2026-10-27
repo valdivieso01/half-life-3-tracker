@@ -6,8 +6,13 @@ import { Plegaria, RespuestaPlegariasPaginadas } from '@/types/hl3';
  * - En local: lee DATABASE_URL desde Docker o `.env.local`
  * - En Vercel: lee DATABASE_URL inyectado por Vercel (Neon Postgres)
  */
+const rawUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+// Neon en Vercel inyecta "?sslmode=require". Lo normalizamos a "sslmode=verify-full"
+// para mantener la máxima seguridad SSL y evitar el warning de pg-connection-string.
+const connectionString = rawUrl.replace('sslmode=require', 'sslmode=verify-full');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || process.env.POSTGRES_URL,
+  connectionString,
 });
 
 let tablasInicializadas = false;
