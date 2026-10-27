@@ -22,8 +22,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const pagina = Number(searchParams.get('page')) || 1;
   const porPagina = Number(searchParams.get('limit')) || POR_PAGINA_DEFAULT;
+  const busquedaAutor = searchParams.get('autor') || '';
 
-  const resultado = await obtenerPlegariasPaginadasDB(pagina, porPagina);
+  const resultado = await obtenerPlegariasPaginadasDB(pagina, porPagina, busquedaAutor);
   return NextResponse.json(resultado);
 }
 
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const ip = obtenerIpCliente(request);
-    const { id, pagina } = await request.json();
+    const { id, pagina, busquedaAutor } = await request.json();
 
     const plegariaObjetivo = await obtenerPlegariaPorIdDB(Number(id));
     if (!plegariaObjetivo) {
@@ -107,7 +108,8 @@ export async function PATCH(request: Request) {
       nuevosAmenes,
       nuevasIps,
       Number(pagina) || 1,
-      POR_PAGINA_DEFAULT
+      POR_PAGINA_DEFAULT,
+      busquedaAutor || ''
     );
     return NextResponse.json(actualizadas);
   } catch (error) {

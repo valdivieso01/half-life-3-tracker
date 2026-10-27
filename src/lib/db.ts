@@ -77,30 +77,57 @@ export async function incrementarContadorDB(): Promise<number> {
 }
 
 /**
- * Obtiene una página de plegarias usando LIMIT y OFFSET en SQL
+ * Obtiene una página de plegarias usando LIMIT y OFFSET en SQL,
+ * con filtro opcional por nombre de usuario (autor) usando ILIKE.
  */
 export async function obtenerPlegariasPaginadasDB(
   pagina = 1,
-  porPagina = 5
+  porPagina = 5,
+  busquedaAutor = ''
 ): Promise<RespuestaPlegariasPaginadas> {
   await asegurarTablasPostgres();
 
   const paginaSegura = Math.max(1, pagina);
   const offset = (paginaSegura - 1) * porPagina;
+  const filtroLimpio = busquedaAutor.trim();
 
-  const conteoRes = await pool.query('SELECT COUNT(*)::int AS total FROM plegarias_hl3');
-  const total = conteoRes.rows[0].total;
+  let total = 0;
+  let res;
+
+  if (filtroLimpio) {
+    const patron = `%${filtroLimpio}%`;
+    const conteoRes = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM plegarias_hl3 WHERE autor ILIKE $1',
+      [patron]
+    );
+    total = conteoRes.rows[0].total;
+
+    res = await pool.query(
+      `
+      SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
+      FROM plegarias_hl3
+      WHERE autor ILIKE $1
+      ORDER BY id DESC
+      LIMIT $2 OFFSET $3;
+      `,
+      [patron, porPagina, offset]
+    );
+  } else {
+    const conteoRes = await pool.query('SELECT COUNT(*)::int AS total FROM plegarias_hl3');
+    total = conteoRes.rows[0].total;
+
+    res = await pool.query(
+      `
+      SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
+      FROM plegarias_hl3
+      ORDER BY id DESC
+      LIMIT $1 OFFSET $2;
+      `,
+      [porPagina, offset]
+    );
+  }
+
   const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
-
-  const res = await pool.query(
-    `
-    SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
-    FROM plegarias_hl3
-    ORDER BY id DESC
-    LIMIT $1 OFFSET $2;
-    `,
-    [porPagina, offset]
-  );
 
   const plegarias: Plegaria[] = res.rows.map((f) => ({
     id: Number(f.id),
@@ -184,7 +211,8 @@ export async function registrarAmenDB(
   nuevosAmenes: number,
   nuevasIpsAmen: string[],
   paginaActual = 1,
-  porPagina = 5
+  porPagina = 5,
+  busquedaAutor = ''
 ): Promise<RespuestaPlegariasPaginadas> {
   await asegurarTablasPostgres();
   await pool.query(
@@ -197,5 +225,5 @@ export async function registrarAmenDB(
     [nuevosAmenes, JSON.stringify(nuevasIpsAmen), id]
   );
 
-  return obtenerPlegariasPaginadasDB(paginaActual, porPagina);
+  return obtenerPlegariasPaginadasDB(paginaActual, porPagina, busquedaAutor);
 }

@@ -17,6 +17,10 @@ export function AltarPlegarias() {
   const [enviando, setEnviando] = useState(false);
   const [errorIp, setErrorIp] = useState('');
 
+  // Estados para el buscador por usuario
+  const [textoBusqueda, setTextoBusqueda] = useState('');
+  const [filtroAutorActivo, setFiltroAutorActivo] = useState('');
+
   // Función que sincroniza el estado de React con la respuesta paginada del Backend
   function aplicarRespuestaPaginada(datos: RespuestaPlegariasPaginadas) {
     setPlegarias(datos.plegarias || []);
@@ -25,17 +29,36 @@ export function AltarPlegarias() {
     setTotalPaginas(datos.totalPaginas || 1);
   }
 
-  // Cada vez que cambia `paginaActual`, pedimos esa página al Backend (?page=X&limit=4)
+  // Cada vez que cambia `paginaActual` o `filtroAutorActivo`, consultamos al Backend
   useEffect(() => {
     setCargandoPagina(true);
-    fetch(`/api/plegarias?page=${paginaActual}&limit=${POR_PAGINA}`)
+    const params = new URLSearchParams({
+      page: String(paginaActual),
+      limit: String(POR_PAGINA),
+    });
+    if (filtroAutorActivo.trim()) {
+      params.set('autor', filtroAutorActivo.trim());
+    }
+
+    fetch(`/api/plegarias?${params.toString()}`)
       .then((res) => res.json())
       .then((datos: RespuestaPlegariasPaginadas) => {
         aplicarRespuestaPaginada(datos);
       })
       .catch((err) => console.error('Error cargando plegarias:', err))
       .finally(() => setCargandoPagina(false));
-  }, [paginaActual]);
+  }, [paginaActual, filtroAutorActivo]);
+
+  function ejecutarBusqueda() {
+    setPaginaActual(1);
+    setFiltroAutorActivo(textoBusqueda.trim());
+  }
+
+  function limpiarBusqueda() {
+    setTextoBusqueda('');
+    setPaginaActual(1);
+    setFiltroAutorActivo('');
+  }
 
   async function prenderVela() {
     if (mensaje.trim() === '') return;
@@ -60,7 +83,9 @@ export function AltarPlegarias() {
         return;
       }
 
-      // Al crear una vela nueva, el Backend nos devuelve la página 1 actualizada
+      // Al crear una vela nueva, limpiamos el filtro de búsqueda y mostramos la página 1
+      setTextoBusqueda('');
+      setFiltroAutorActivo('');
       aplicarRespuestaPaginada(datos);
       setMensaje('');
     } finally {
@@ -74,7 +99,11 @@ export function AltarPlegarias() {
     const res = await fetch('/api/plegarias', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: idPlegaria, pagina: paginaActual }),
+      body: JSON.stringify({
+        id: idPlegaria,
+        pagina: paginaActual,
+        busquedaAutor: filtroAutorActivo,
+      }),
     });
 
     const datos = await res.json();
@@ -114,7 +143,7 @@ export function AltarPlegarias() {
         </div>
       )}
 
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 mb-6 flex flex-col sm:flex-row gap-3">
+      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 mb-4 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Tu apodo (ej. Freeman)"
@@ -143,32 +172,74 @@ export function AltarPlegarias() {
         </button>
       </div>
 
+      {/* Buscador de mensajes por usuario (consulta SQL con ILIKE) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-5">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="🔍 Buscar plegarias por nombre de usuario (ej. Javier)..."
+            value={textoBusqueda}
+            onChange={(e) => setTextoBusqueda(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') ejecutarBusqueda();
+            }}
+            className="w-full bg-zinc-900/60 border border-zinc-800 rounded-lg px-3.5 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-orange-500/60"
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={ejecutarBusqueda}
+            disabled={cargandoPagina}
+            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs px-4 py-2 rounded-lg border border-zinc-700 cursor-pointer transition-colors whitespace-nowrap"
+          >
+            Buscar usuario
+          </button>
+
+          {filtroAutorActivo && (
+            <button
+              onClick={limpiarBusqueda}
+              className="bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 border border-orange-500/30 font-semibold text-xs px-3 py-2 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+            >
+              ✕ Ver todos
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Lista de plegarias de la página actual */}
       <div className={`space-y-3 transition-opacity ${cargandoPagina ? 'opacity-50' : 'opacity-100'}`}>
-        {plegarias.map((p) => (
-          <div
-            key={p.id}
-            className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between gap-4"
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-xl">🕯️</span>
-              <div>
-                <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
-                  <strong className="text-orange-400">{p.autor}</strong>
-                  <span>• {p.fecha}</span>
-                </div>
-                <p className="text-sm text-zinc-300">{p.mensaje}</p>
-              </div>
-            </div>
-
-            <button
-              onClick={() => darAmen(p.id)}
-              className="bg-zinc-800 hover:bg-orange-500/20 hover:text-orange-400 border border-zinc-700 hover:border-orange-500/40 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
-            >
-              🙏 Amén ({p.amenes || 0})
-            </button>
+        {plegarias.length === 0 ? (
+          <div className="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6 text-center text-sm text-zinc-500">
+            No se encontraron plegarias del usuario{' '}
+            <strong className="text-zinc-300">&quot;{filtroAutorActivo}&quot;</strong>.
           </div>
-        ))}
+        ) : (
+          plegarias.map((p) => (
+            <div
+              key={p.id}
+              className="bg-zinc-900/40 border border-zinc-800/80 rounded-xl p-4 flex items-center justify-between gap-4"
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xl">🕯️</span>
+                <div>
+                  <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
+                    <strong className="text-orange-400">{p.autor}</strong>
+                    <span>• {p.fecha}</span>
+                  </div>
+                  <p className="text-sm text-zinc-300">{p.mensaje}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => darAmen(p.id)}
+                className="bg-zinc-800 hover:bg-orange-500/20 hover:text-orange-400 border border-zinc-700 hover:border-orange-500/40 text-zinc-300 text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+              >
+                🙏 Amén ({p.amenes || 0})
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Controles de Paginación */}
