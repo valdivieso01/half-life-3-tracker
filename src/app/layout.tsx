@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Analytics } from '@vercel/analytics/next';
 // @ts-ignore -- CSS modules are provided by the Next.js build pipeline.
 import './globals.css';
 
@@ -94,6 +95,7 @@ export default function RootLayout({
       </head>
       <body className="bg-zinc-950 text-zinc-100 antialiased">
         {children}
+        <Analytics />
       </body>
     </html>
   );
