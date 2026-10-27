@@ -99,7 +99,7 @@ export default function HomePage() {
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            🇪🇸 ES
+            ES
           </button>
           <button
             onClick={() => setIdioma('en')}
@@ -109,7 +109,7 @@ export default function HomePage() {
                 : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            🇺🇸 EN
+            EN
           </button>
         </div>
       </div>
