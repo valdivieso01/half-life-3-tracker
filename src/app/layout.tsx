@@ -60,6 +60,9 @@ export const metadata: Metadata = {
     description:
       'Verificador diario contra Steam, noticias de Half-Life 3 y Altar de Plegarias a Gabe Newell.',
   },
+  other: {
+    'google-adsense-account': 'ca-pub-4665232577336299',
+  },
 };
 
 export default function RootLayout({
@@ -105,6 +108,11 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+        <script
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4665232577336299"
+          crossOrigin="anonymous"
         />
       </head>
       <body className="bg-zinc-950 text-zinc-100 antialiased">
