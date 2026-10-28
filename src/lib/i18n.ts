@@ -56,11 +56,18 @@ export const TRADUCCIONES = {
           'La recreación completa de Half-Life 1 en motor Source con niveles de Xen totalmente rediseñados desde cero.',
       },
       {
-        appId: 1583720,
-        nombre: 'Entropy : Zero 2',
-        etiqueta: 'Mod Gratuito',
+        appId: 480490,
+        nombre: 'Prey',
+        etiqueta: 'ADN 100% Half-Life',
         descripcion:
-          'Considerado por la comunidad como el verdadero "Episode Three". Juegas como un soldado de élite de la Alianza (Combine) cazando a Judith Mossman.',
+          'Una instalación científica invadida por alienígenas, narrativa ambiental sin cinemáticas y una llave inglesa como arma inicial. El heredero espiritual de Black Mesa.',
+      },
+      {
+        appId: 1237970,
+        nombre: 'Titanfall 2',
+        etiqueta: 'Campaña FPS Perfecta',
+        descripcion:
+          'Creado sobre una versión modificada del motor Source de Valve. Su campaña introduce una mecánica única en cada nivel al más puro estilo Half-Life 2.',
       },
       {
         appId: 546560,
@@ -70,13 +77,6 @@ export const TRADUCCIONES = {
           'Obligatorio porque su final cambia directamente la línea temporal de Episode Two. Se puede jugar en VR o en monitor común con el mod NoVR.',
       },
       {
-        appId: 427410,
-        nombre: 'Abiotic Factor',
-        etiqueta: 'Co-op Científico',
-        descripcion:
-          'Supervivencia cooperativa para hasta 6 jugadores inspirada directamente en los científicos del Sector C de Black Mesa durante una brecha de contención.',
-      },
-      {
         appId: 220,
         nombre: 'Half-Life 2 (20th Anniversary)',
         etiqueta: 'Clásico Actualizado',
@@ -84,11 +84,11 @@ export const TRADUCCIONES = {
           'Incluye Episode One, Episode Two unificados, soporte de Steam Workshop y más de 3 horas de comentarios nuevos del equipo original de Valve.',
       },
       {
-        appId: 601360,
-        nombre: 'Portal: Revolution',
-        etiqueta: 'Mod Gratuito',
+        appId: 412020,
+        nombre: 'Metro Exodus',
+        etiqueta: 'Inmersión Total',
         descripcion:
-          'Campaña completa de más de 8 horas ambientada en el mismo universo (Aperture Science) entre Portal 1 y Portal 2.',
+          'Shooter narrativo en primera persona sin cortes de cámara, viajes en tren al estilo Ciudad 17 y una atmósfera postapocalíptica brutal.',
       },
     ],
     excusasGabe: [
@@ -167,11 +167,18 @@ export const TRADUCCIONES = {
           'The definitive fan-made remake of Half-Life 1 blessed by Valve, featuring a completely reimagined Xen campaign.',
       },
       {
-        appId: 1583720,
-        nombre: 'Entropy : Zero 2',
-        etiqueta: 'Free Mod',
+        appId: 480490,
+        nombre: 'Prey',
+        etiqueta: 'Pure Half-Life DNA',
         descripcion:
-          'Hailed by the community as the unofficial "Episode Three". Play as an elite Combine soldier hunting down Judith Mossman in the Arctic.',
+          'A secret research facility overrun by shape-shifting aliens, environmental storytelling, physics interactions, and an iconic wrench in hand.',
+      },
+      {
+        appId: 1237970,
+        nombre: 'Titanfall 2',
+        etiqueta: 'Masterpiece Sci-Fi FPS',
+        descripcion:
+          'Built on a heavily modified version of Valve’s Source engine. Its single-player campaign invents a new gameplay mechanic in every chapter just like Half-Life 2.',
       },
       {
         appId: 546560,
@@ -181,13 +188,6 @@ export const TRADUCCIONES = {
           'Essential because its ending directly alters the Episode Two cliffhanger. Playable in VR or on a standard flat screen via the NoVR mod.',
       },
       {
-        appId: 427410,
-        nombre: 'Abiotic Factor',
-        etiqueta: ' Co-op Survival',
-        descripcion:
-          '6-player co-op crafting survival heavily inspired by Half-Life 1’s Black Mesa scientists trapped underground during a containment breach.',
-      },
-      {
         appId: 220,
         nombre: 'Half-Life 2 (20th Anniversary)',
         etiqueta: 'Updated Classic',
@@ -195,11 +195,11 @@ export const TRADUCCIONES = {
           'Now bundles Episode One & Two together with Steam Workshop support and 3.5 hours of new developer commentary from the original Valve team.',
       },
       {
-        appId: 601360,
-        nombre: 'Portal: Revolution',
-        etiqueta: 'Free Mod',
+        appId: 412020,
+        nombre: 'Metro Exodus',
+        etiqueta: 'Total Immersion FPS',
         descripcion:
-          'A full 8-hour prequel campaign set in the shared Half-Life / Aperture Science universe between Portal 1 and Portal 2.',
+          'First-person narrative shooter with unbroken camera immersion, cross-country train journeys, and heavy City 17 post-apocalyptic vibes.',
       },
     ],
     excusasGabe: [

@@ -57,3 +57,4 @@ export function SeccionQueJugar({ idioma = 'es' }: SeccionQueJugarProps) {
     </section>
   );
 }
+
