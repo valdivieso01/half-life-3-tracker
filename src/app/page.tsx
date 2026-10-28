@@ -5,6 +5,7 @@ import { NoticiaHL3, RespuestaSteam } from '@/types/hl3';
 import { TarjetaNoticia } from '@/components/TarjetaNoticia';
 import { AltarPlegarias } from '@/components/AltarPlegarias';
 import { PanelCachetadaGabe } from '@/components/PanelCachetadaGabe';
+import { SeccionQueJugar } from '@/components/SeccionQueJugar';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 export default function HomePage() {
@@ -218,6 +219,8 @@ export default function HomePage() {
 
         <AltarPlegarias idioma={idioma} />
       </div>
+
+      <SeccionQueJugar idioma={idioma} />
     </main>
   );
 }

@@ -44,6 +44,53 @@ export const TRADUCCIONES = {
       '¡Después del próximo cofre de CS2 lo saco!',
       '¡Me hiciste olvidar por qué número íbamos!',
     ],
+    queJugarTitulo: '🎮 Qué jugar mientras esperamos Half-Life 3',
+    queJugarSubtitulo: 'Joyas, remakes y mods esenciales en Steam para calmar la abstinencia',
+    verEnSteam: 'Ver en Steam →',
+    juegosRecomendados: [
+      {
+        appId: 362890,
+        nombre: 'Black Mesa',
+        etiqueta: 'Remake Imprescindible',
+        descripcion:
+          'La recreación completa de Half-Life 1 en motor Source con niveles de Xen totalmente rediseñados desde cero.',
+      },
+      {
+        appId: 1583720,
+        nombre: 'Entropy : Zero 2',
+        etiqueta: 'Mod Gratuito',
+        descripcion:
+          'Considerado por la comunidad como el verdadero "Episode Three". Juegas como un soldado de élite de la Alianza (Combine) cazando a Judith Mossman.',
+      },
+      {
+        appId: 546560,
+        nombre: 'Half-Life: Alyx',
+        etiqueta: 'Canon de Valve',
+        descripcion:
+          'Obligatorio porque su final cambia directamente la línea temporal de Episode Two. Se puede jugar en VR o en monitor común con el mod NoVR.',
+      },
+      {
+        appId: 427410,
+        nombre: 'Abiotic Factor',
+        etiqueta: 'Co-op Científico',
+        descripcion:
+          'Supervivencia cooperativa para hasta 6 jugadores inspirada directamente en los científicos del Sector C de Black Mesa durante una brecha de contención.',
+      },
+      {
+        appId: 220,
+        nombre: 'Half-Life 2 (20th Anniversary)',
+        etiqueta: 'Clásico Actualizado',
+        descripcion:
+          'Incluye Episode One, Episode Two unificados, soporte de Steam Workshop y más de 3 horas de comentarios nuevos del equipo original de Valve.',
+      },
+      {
+        appId: 601360,
+        nombre: 'Portal: Revolution',
+        etiqueta: 'Mod Gratuito',
+        descripcion:
+          'Campaña completa de más de 8 horas ambientada en el mismo universo (Aperture Science) entre Portal 1 y Portal 2.',
+      },
+    ],
     excusasGabe: [
       'Gabe Newell estaba por subir el juego pero se distrajo contando billetes de las rebajas de Steam.',
       'En los teclados de las oficinas de Valve la tecla entre el 2 y el 4 fue reemplazada por "Alyx".',
@@ -107,6 +154,53 @@ export const TRADUCCIONES = {
       'Not with the crowbar, Freeman!',
       'Right after the next CS2 case update!',
       'You just made me forget what number comes after 2!',
+    ],
+    queJugarTitulo: '🎮 What to Play While Waiting for Half-Life 3',
+    queJugarSubtitulo: 'Essential games, remakes & Steam mods to survive the wait',
+    verEnSteam: 'View on Steam →',
+    juegosRecomendados: [
+      {
+        appId: 362890,
+        nombre: 'Black Mesa',
+        etiqueta: 'Must-Play Remake',
+        descripcion:
+          'The definitive fan-made remake of Half-Life 1 blessed by Valve, featuring a completely reimagined Xen campaign.',
+      },
+      {
+        appId: 1583720,
+        nombre: 'Entropy : Zero 2',
+        etiqueta: 'Free Mod',
+        descripcion:
+          'Hailed by the community as the unofficial "Episode Three". Play as an elite Combine soldier hunting down Judith Mossman in the Arctic.',
+      },
+      {
+        appId: 546560,
+        nombre: 'Half-Life: Alyx',
+        etiqueta: 'Official Canon',
+        descripcion:
+          'Essential because its ending directly alters the Episode Two cliffhanger. Playable in VR or on a standard flat screen via the NoVR mod.',
+      },
+      {
+        appId: 427410,
+        nombre: 'Abiotic Factor',
+        etiqueta: ' Co-op Survival',
+        descripcion:
+          '6-player co-op crafting survival heavily inspired by Half-Life 1’s Black Mesa scientists trapped underground during a containment breach.',
+      },
+      {
+        appId: 220,
+        nombre: 'Half-Life 2 (20th Anniversary)',
+        etiqueta: 'Updated Classic',
+        descripcion:
+          'Now bundles Episode One & Two together with Steam Workshop support and 3.5 hours of new developer commentary from the original Valve team.',
+      },
+      {
+        appId: 601360,
+        nombre: 'Portal: Revolution',
+        etiqueta: 'Free Mod',
+        descripcion:
+          'A full 8-hour prequel campaign set in the shared Half-Life / Aperture Science universe between Portal 1 and Portal 2.',
+      },
     ],
     excusasGabe: [
       'Gabe Newell was about to upload the build, but got distracted counting Steam Sale money.',
