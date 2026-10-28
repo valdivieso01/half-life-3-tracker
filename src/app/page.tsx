@@ -115,81 +115,90 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-4xl font-bold text-orange-500 mb-4 shadow-lg shadow-orange-500/10">
-        λ
+      {/* Cabecera en 3 columnas en PC: columna vacía a la izq + Radar centrado al medio + Stress Reliever a la derecha (sin pisar lo de abajo) */}
+      <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-8">
+        <div className="hidden lg:block" />
+
+        <div className="flex flex-col items-center">
+          <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-4xl font-bold text-orange-500 mb-4 shadow-lg shadow-orange-500/10">
+            λ
+          </div>
+
+          <h1 className="text-4xl font-extrabold tracking-tight text-white mb-2">
+            {t.tituloPrincipal} <span className="text-orange-500">Half-Life 3</span>
+          </h1>
+
+          <p className="text-zinc-400 text-sm mb-8">
+            {t.diasEsperandoPrefijo}{' '}
+            <strong className="text-orange-400 font-bold">
+              {diasEsperando} {t.diasPalabra}
+            </strong>{' '}
+            {t.diasEsperandoSufijo} <em>Half-Life 2: Episode Two</em> (2007)
+          </p>
+
+          {/* El botón queda deshabilitado mientras consulta O mientras `enfriamiento > 0` */}
+          <button
+            onClick={preguntarASteam}
+            disabled={consultando || enfriamiento > 0}
+            className="bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-400 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg cursor-pointer disabled:cursor-not-allowed transition-all"
+          >
+            {consultando
+              ? t.botonVerificando
+              : enfriamiento > 0
+                ? t.botonEnfriando(enfriamiento)
+                : t.botonPreguntar}
+          </button>
+
+          {errorSpam && (
+            <p className="mt-4 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-lg">
+              {errorSpam}
+            </p>
+          )}
+
+          {resultado && (
+            <div className="mt-8 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-lg w-full">
+              <span
+                className={`inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-3 ${
+                  resultado.desdeCache
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                    : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
+                }`}
+              >
+                {resultado.desdeCache
+                  ? t.badgeCache(resultado.horaConsulta)
+                  : t.badgeVivo(resultado.horaConsulta)}
+              </span>
+
+              <p className="text-4xl font-black text-red-500 mb-2">
+                {resultado.salio ? t.respuestaSi : t.respuestaNo}
+              </p>
+
+              <p className="text-zinc-200 font-medium mb-4 italic">
+                &ldquo;{excusaActual}&rdquo;
+              </p>
+
+              <div className="text-left border-t border-zinc-800 pt-4">
+                <p className="text-xs text-zinc-500 mb-2">{t.loQueHayEnSteam}</p>
+                <ul className="text-xs text-zinc-400 space-y-1 mb-4">
+                  {resultado.loQueSiHayEnSteam.map((juego) => (
+                    <li key={juego.id}>• {juego.nombre}</li>
+                  ))}
+                </ul>
+                <p className="text-xs text-orange-400">
+                  {t.totalConsultas} {resultado.totalConsultas}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex justify-center lg:justify-end">
+          <PanelCachetadaGabe idioma={idioma} />
+        </div>
       </div>
 
-      <h1 className="text-4xl font-extrabold tracking-tight text-white mb-2">
-        {t.tituloPrincipal} <span className="text-orange-500">Half-Life 3</span>
-      </h1>
-
-      <p className="text-zinc-400 text-sm mb-8">
-        {t.diasEsperandoPrefijo}{' '}
-        <strong className="text-orange-400 font-bold">
-          {diasEsperando} {t.diasPalabra}
-        </strong>{' '}
-        {t.diasEsperandoSufijo} <em>Half-Life 2: Episode Two</em> (2007)
-      </p>
-
-      {/* El botón queda deshabilitado mientras consulta O mientras `enfriamiento > 0` */}
-      <button
-        onClick={preguntarASteam}
-        disabled={consultando || enfriamiento > 0}
-        className="bg-orange-600 hover:bg-orange-500 disabled:bg-zinc-800 disabled:text-zinc-400 text-white font-bold text-lg px-8 py-4 rounded-xl shadow-lg cursor-pointer disabled:cursor-not-allowed transition-all"
-      >
-        {consultando
-          ? t.botonVerificando
-          : enfriamiento > 0
-            ? t.botonEnfriando(enfriamiento)
-            : t.botonPreguntar}
-      </button>
-
-      {errorSpam && (
-        <p className="mt-4 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-4 py-2 rounded-lg">
-          {errorSpam}
-        </p>
-      )}
-
-      {resultado && (
-        <div className="mt-8 bg-zinc-900 border border-zinc-800 rounded-2xl p-6 max-w-lg w-full">
-          <span
-            className={`inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-full mb-3 ${
-              resultado.desdeCache
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                : 'bg-orange-500/10 text-orange-400 border border-orange-500/20'
-            }`}
-          >
-            {resultado.desdeCache
-              ? t.badgeCache(resultado.horaConsulta)
-              : t.badgeVivo(resultado.horaConsulta)}
-          </span>
-
-          <p className="text-4xl font-black text-red-500 mb-2">
-            {resultado.salio ? t.respuestaSi : t.respuestaNo}
-          </p>
-
-          <p className="text-zinc-200 font-medium mb-4 italic">
-            &ldquo;{excusaActual}&rdquo;
-          </p>
-
-          <div className="text-left border-t border-zinc-800 pt-4">
-            <p className="text-xs text-zinc-500 mb-2">{t.loQueHayEnSteam}</p>
-            <ul className="text-xs text-zinc-400 space-y-1 mb-4">
-              {resultado.loQueSiHayEnSteam.map((juego) => (
-                <li key={juego.id}>• {juego.nombre}</li>
-              ))}
-            </ul>
-            <p className="text-xs text-orange-400">
-              {t.totalConsultas} {resultado.totalConsultas}
-            </p>
-          </div>
-        </div>
-      )}
-
-      <PanelCachetadaGabe idioma={idioma} />
-
       {/* Grilla de 2 columnas en escritorio: Noticias a la izquierda y Altar a la derecha */}
-      <div className="mt-14 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="mt-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <section className="w-full text-left">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
             <h2 className="text-xl font-bold text-zinc-100">{t.tituloNoticias}</h2>
