@@ -135,7 +135,6 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
         <h2 className="text-xl font-bold text-zinc-100">
           {t.altarTitulo(totalVelas)}
         </h2>
-        <span className="text-xs text-zinc-500">{t.altarReglaIp}</span>
       </div>
 
       {/* Alerta roja cuando el Backend bloquea por IP repetida */}
