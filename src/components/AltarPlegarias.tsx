@@ -132,9 +132,16 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
   return (
     <section className="mt-14 w-full text-left">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
-        <h2 className="text-xl font-bold text-zinc-100">
-          {t.altarTitulo(totalVelas)}
-        </h2>
+        <div className="flex items-center gap-3">
+          <img
+            src="/gabe.gif"
+            alt="Santo Gabe Newell"
+            className="w-10 h-10 rounded-full object-cover border-2 border-orange-500/60 shadow-sm"
+          />
+          <h2 className="text-xl font-bold text-zinc-100">
+            {t.altarTitulo(totalVelas)}
+          </h2>
+        </div>
       </div>
 
       {/* Alerta roja cuando el Backend bloquea por IP repetida */}

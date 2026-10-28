@@ -163,9 +163,15 @@ export default function HomePage() {
               : t.badgeVivo(resultado.horaConsulta)}
           </span>
 
-          <p className="text-4xl font-black text-red-500 mb-2">
+          <p className="text-4xl font-black text-red-500 mb-3">
             {resultado.salio ? t.respuestaSi : t.respuestaNo}
           </p>
+
+          <img
+            src="/gabe.gif"
+            alt="Gabe Newell"
+            className="w-44 h-auto mx-auto rounded-xl border border-orange-500/30 shadow-md mb-4"
+          />
 
           <p className="text-zinc-200 font-medium mb-4 italic">
             &ldquo;{excusaActual}&rdquo;
