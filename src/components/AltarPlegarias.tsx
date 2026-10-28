@@ -130,7 +130,7 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
   }
 
   return (
-    <section className="mt-14 w-full text-left">
+    <section className="w-full text-left">
       <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
         <h2 className="text-xl font-bold text-zinc-100">
           {t.altarTitulo(totalVelas)}
@@ -150,33 +150,35 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
         </div>
       )}
 
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 mb-4 flex flex-col sm:flex-row gap-3">
+      <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 mb-4 flex flex-col gap-3">
         <input
           type="text"
           placeholder={t.placeholderApodo}
           value={autor}
           onChange={(e) => setAutor(e.target.value)}
-          className="sm:w-48 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
+          className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
         />
 
-        <input
-          type="text"
-          placeholder={t.placeholderMensaje}
-          value={mensaje}
-          onChange={(e) => setMensaje(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') prenderVela();
-          }}
-          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
-        />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            placeholder={t.placeholderMensaje}
+            value={mensaje}
+            onChange={(e) => setMensaje(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') prenderVela();
+            }}
+            className="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
+          />
 
-        <button
-          onClick={prenderVela}
-          disabled={enviando}
-          className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-semibold text-sm px-5 py-2 rounded-lg cursor-pointer whitespace-nowrap"
-        >
-          {enviando ? t.botonPrendiendo : t.botonPrenderVela}
-        </button>
+          <button
+            onClick={prenderVela}
+            disabled={enviando}
+            className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 text-white font-semibold text-sm px-4 py-2 rounded-lg cursor-pointer whitespace-nowrap"
+          >
+            {enviando ? t.botonPrendiendo : t.botonPrenderVela}
+          </button>
+        </div>
       </div>
 
       {/* Buscador de mensajes por usuario (consulta SQL con ILIKE) */}

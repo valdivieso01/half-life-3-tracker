@@ -88,7 +88,7 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
   }`;
 
   return (
-    <aside className="mt-8 xl:mt-0 xl:fixed xl:right-6 xl:top-1/2 xl:-translate-y-1/2 w-full max-w-xs xl:w-60 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 shadow-xl z-20 select-none">
+    <aside className="mt-8 lg:mt-0 lg:absolute lg:right-6 lg:top-20 w-full max-w-xs lg:w-56 bg-zinc-900/90 border border-zinc-800 rounded-2xl p-3.5 shadow-xl z-20 select-none">
       <div className="text-center mb-3">
         <h3 className="text-sm font-bold text-orange-400">{t.cachetadaTitulo}</h3>
         <p className="text-[11px] text-zinc-400">{t.cachetadaSubtitulo}</p>
