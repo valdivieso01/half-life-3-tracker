@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { NoticiaHL3, RespuestaSteam } from '@/types/hl3';
 import { TarjetaNoticia } from '@/components/TarjetaNoticia';
 import { AltarPlegarias } from '@/components/AltarPlegarias';
+import { PanelCachetadaGabe } from '@/components/PanelCachetadaGabe';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 export default function HomePage() {
@@ -163,15 +164,9 @@ export default function HomePage() {
               : t.badgeVivo(resultado.horaConsulta)}
           </span>
 
-          <p className="text-4xl font-black text-red-500 mb-3">
+          <p className="text-4xl font-black text-red-500 mb-2">
             {resultado.salio ? t.respuestaSi : t.respuestaNo}
           </p>
-
-          <img
-            src="/gabe.gif"
-            alt="Gabe Newell"
-            className="w-44 h-auto mx-auto rounded-xl border border-orange-500/30 shadow-md mb-4"
-          />
 
           <p className="text-zinc-200 font-medium mb-4 italic">
             &ldquo;{excusaActual}&rdquo;
@@ -190,6 +185,8 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      <PanelCachetadaGabe idioma={idioma} />
 
       <section className="mt-14 w-full text-left">
         <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
