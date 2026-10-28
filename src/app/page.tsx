@@ -88,7 +88,7 @@ export default function HomePage() {
   const excusaActual = t.excusasGabe[indiceExcusa] || t.excusasGabe[0];
 
   return (
-    <main className="relative min-h-screen max-w-6xl mx-auto flex flex-col items-center py-8 px-6 text-center">
+    <main className="relative min-h-screen w-full max-w-[1560px] mx-auto flex flex-col items-center py-8 px-6 md:px-10 xl:px-14 text-center">
       {/* Selector de idioma ES / EN */}
       <div className="w-full flex justify-end mb-4">
         <div className="inline-flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
@@ -198,7 +198,7 @@ export default function HomePage() {
       </div>
 
       {/* Grilla de 2 columnas en escritorio: Noticias a la izquierda y Altar a la derecha */}
-      <div className="mt-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+      <div className="mt-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12 items-start">
         <section className="w-full text-left">
           <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
             <h2 className="text-xl font-bold text-zinc-100">{t.tituloNoticias}</h2>
