@@ -93,14 +93,14 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
         className="relative overflow-hidden rounded-xl border-2 border-zinc-800 hover:border-orange-500/60 cursor-pointer group bg-zinc-950"
       >
         <img
-          src="/gabe.gif"
+          src="/gabe-slap.jpg"
           alt="Gabe Newell"
           draggable={false}
           style={{
             transform: transformStyle,
             transition: 'transform 90ms cubic-bezier(0.2, 0.9, 0.3, 1.3)',
           }}
-          className="w-full h-44 object-cover"
+          className="w-full aspect-square object-cover"
         />
 
         {/* Flash rojo de impacto cuando recibe la cachetada */}
@@ -132,3 +132,4 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
     </aside>
   );
 }
+
