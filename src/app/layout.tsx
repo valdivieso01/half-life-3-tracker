@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/next';
 // @ts-ignore -- CSS modules are provided by the Next.js build pipeline.
 import './globals.css';
@@ -104,18 +105,17 @@ export default function RootLayout({
 
   return (
     <html lang="es">
-      <head>
+      <body className="bg-zinc-950 text-zinc-100 antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
-        <script
+        <Script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4665232577336299"
           crossOrigin="anonymous"
+          strategy="afterInteractive"
         />
-      </head>
-      <body className="bg-zinc-950 text-zinc-100 antialiased">
         {children}
         <Analytics />
       </body>
