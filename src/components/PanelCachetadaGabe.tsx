@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 interface PanelCachetadaGabeProps {
@@ -15,11 +15,15 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
   const [golpeando, setGolpeando] = useState(false);
   const [onomatopeya, setOnomatopeya] = useState('');
   const [indiceFrase, setIndiceFrase] = useState(0);
+  const timerGolpeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sonido de cachetada sintetizado con Web Audio API (sin archivos MP3 externos)
   function reproducirSonidoCachetada() {
     try {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext })
+          .webkitAudioContext;
       if (!AudioCtx) return;
 
       const ctx = new AudioCtx();
@@ -69,14 +73,18 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
     setOnomatopeya(textoGolpe);
     setIndiceFrase((prev) => (prev + 1) % t.cachetadaFrases.length);
 
-    setTimeout(() => {
+    if (timerGolpeRef.current) {
+      clearTimeout(timerGolpeRef.current);
+    }
+    // Mantiene la cara de cacheteado durante 450ms y luego vuelve a la sonrisa sobradora (idle)
+    timerGolpeRef.current = setTimeout(() => {
       setGolpeando(false);
-    }, 180);
+    }, 450);
   }
 
   // Transformación dinámica: espeja horizontalmente (scaleX) e inclina al recibir el golpe
   const transformStyle = `${espejado ? 'scaleX(-1)' : 'scaleX(1)'} ${
-    golpeando ? 'rotate(-8deg) scale(0.95)' : 'rotate(0deg) scale(1)'
+    golpeando ? 'rotate(-6deg) scale(0.96)' : 'rotate(0deg) scale(1)'
   }`;
 
   return (
@@ -86,26 +94,29 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
         <p className="text-[11px] text-zinc-400">{t.cachetadaSubtitulo}</p>
       </div>
 
-      {/* Zona clickeable con cursor de mano abierta */}
+      {/* Zona clickeable: muestra /gabe-idle.jpg en reposo y cambia a /gabe-slap.jpg al golpear */}
       <div
         onClick={pegarCachetada}
         title={t.cachetadaSubtitulo}
         className="relative overflow-hidden rounded-xl border-2 border-zinc-800 hover:border-orange-500/60 cursor-pointer group bg-zinc-950"
       >
+        {/* Precarga oculta de la imagen de golpe para cambio instantáneo sin parpadeo */}
+        <link rel="preload" as="image" href="/gabe-slap.jpg" />
+
         <img
-          src="/gabe-slap.jpg"
+          src={golpeando ? '/gabe-slap.jpg' : '/gabe-idle.jpg'}
           alt="Gabe Newell"
           draggable={false}
           style={{
             transform: transformStyle,
-            transition: 'transform 90ms cubic-bezier(0.2, 0.9, 0.3, 1.3)',
+            transition: 'transform 80ms cubic-bezier(0.2, 0.9, 0.3, 1.3)',
           }}
           className="w-full aspect-square object-cover"
         />
 
-        {/* Flash rojo de impacto cuando recibe la cachetada */}
+        {/* Flash rojo y onomatopeya cuando recibe la cachetada */}
         {golpeando && (
-          <div className="absolute inset-0 bg-red-500/35 pointer-events-none flex items-center justify-center">
+          <div className="absolute inset-0 bg-red-500/20 pointer-events-none flex items-start justify-center pt-3">
             <span className="bg-orange-600 text-white font-black text-xs px-2.5 py-1 rounded-full shadow-lg animate-bounce">
               {onomatopeya}
             </span>
@@ -132,4 +143,3 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
     </aside>
   );
 }
-
