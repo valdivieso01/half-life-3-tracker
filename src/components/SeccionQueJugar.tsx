@@ -8,7 +8,7 @@ export function SeccionQueJugar({ idioma = 'es' }: SeccionQueJugarProps) {
   const t = TRADUCCIONES[idioma];
 
   return (
-    <section className="mt-16 w-full text-left">
+    <section className="w-full text-left">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-800 pb-3 mb-6 gap-2">
         <h2 className="text-xl font-bold text-zinc-100">{t.queJugarTitulo}</h2>
         <span className="text-xs text-zinc-500">{t.queJugarSubtitulo}</span>

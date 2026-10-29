@@ -91,6 +91,62 @@ export const TRADUCCIONES = {
           'Shooter narrativo en primera persona sin cortes de cámara, viajes en tren al estilo Ciudad 17 y una atmósfera postapocalíptica brutal.',
       },
     ],
+    tabInicio: '📡 Radar y Altar',
+    tabJuegos: '🎮 Juegos Similares',
+    tabTimeline: '📜 Línea de Tiempo (2007–2026)',
+    timelineTitulo: '📜 Cronología de una Espera Eterna (2007 – 2026)',
+    timelineSubtitulo: 'Todos los anuncios, cancelaciones secretas y filtraciones reales de Half-Life 3',
+    timelineNivelEsperanza: 'Nivel de esperanza de la comunidad',
+    hitosLineaTiempo: [
+      {
+        anio: 'Oct 2007',
+        titulo: 'El Cliffhanger de Half-Life 2: Episode Two',
+        categoria: '🏢 Oficial de Valve',
+        esperanza: 100,
+        descripcion:
+          'Episode Two termina con la promesa de que Gordon y Alyx viajarían al Ártico a buscar el barco Borealis en "Episode Three", anunciado originalmente para Navidad de 2007.',
+      },
+      {
+        anio: 'Jun 2013',
+        titulo: 'La filtración del Jira interno de Valve',
+        categoria: '🕵️ Filtración Real',
+        esperanza: 65,
+        descripcion:
+          'Por un error en el sistema de gestión de proyectos (Jira) de Valve, se filtran listas internas de empleados asignados a los grupos "Half-Life 3" y "Half-Life 3 Core".',
+      },
+      {
+        anio: 'Ago 2017',
+        titulo: '"Epistle 3" de Marc Laidlaw',
+        categoria: '💔 Esperanza por el piso',
+        esperanza: 10,
+        descripcion:
+          'Tras jubilarse de Valve, el guionista original Marc Laidlaw publica en su blog un relato con nombres cambiados ("Gertie Fremont") revelando cuál iba a ser la trama de Episode Three.',
+      },
+      {
+        anio: 'Mar 2020',
+        titulo: 'Half-Life: Alyx cambia el final de Episode Two',
+        categoria: '🏢 Oficial de Valve',
+        esperanza: 85,
+        descripcion:
+          'Después de 13 años de silencio, Valve lanza Half-Life: Alyx. Su escena post-créditos reescribe los últimos minutos de Episode Two y vuelve a poner la palanca en manos de Gordon Freeman.',
+      },
+      {
+        anio: 'Ago 2024',
+        titulo: 'Se filtra "Project White Sands"',
+        categoria: '🕵️ Filtración Real',
+        esperanza: 88,
+        descripcion:
+          'Una actriz de doblaje publica en su portafolio haber trabajado para Valve en un proyecto con nombre clave "White Sands" (el parque nacional de Nuevo México donde se ubica Black Mesa).',
+      },
+      {
+        anio: '2025 – 2026',
+        titulo: 'Código "HLX" en actualizaciones de Source 2',
+        categoria: '🔥 Desarrollo Activo',
+        esperanza: 95,
+        descripcion:
+          'Dataminers descubren en parches de Counter-Strike 2 y Deadlock cientos de líneas de código de un juego single-player llamado "HLX" con referencias al traje HEV, Xen y física avanzada.',
+      },
+    ],
     excusasGabe: [
       'Gabe Newell estaba por subir el juego pero se distrajo contando billetes de las rebajas de Steam.',
       'En los teclados de las oficinas de Valve la tecla entre el 2 y el 4 fue reemplazada por "Alyx".',
@@ -200,6 +256,62 @@ export const TRADUCCIONES = {
         etiqueta: 'Total Immersion FPS',
         descripcion:
           'First-person narrative shooter with unbroken camera immersion, cross-country train journeys, and heavy City 17 post-apocalyptic vibes.',
+      },
+    ],
+    tabInicio: '📡 Radar & Altar',
+    tabJuegos: '🎮 Similar Games',
+    tabTimeline: '📜 Timeline (2007–2026)',
+    timelineTitulo: '📜 Timeline of an Eternal Wait (2007 – 2026)',
+    timelineSubtitulo: 'Every official milestone, secret cancellation, and real datamined leak of Half-Life 3',
+    timelineNivelEsperanza: 'Community hope meter',
+    hitosLineaTiempo: [
+      {
+        anio: 'Oct 2007',
+        titulo: 'The Half-Life 2: Episode Two Cliffhanger',
+        categoria: '🏢 Valve Official',
+        esperanza: 100,
+        descripcion:
+          'Episode Two ends on a dramatic cliffhanger with Gordon and Alyx preparing to fly to the Arctic to find the Borealis ship in "Episode Three", originally slated for Christmas 2007.',
+      },
+      {
+        anio: 'Jun 2013',
+        titulo: 'The Valve Internal Jira Leak',
+        categoria: '🕵️ Real Leak',
+        esperanza: 65,
+        descripcion:
+          'A brief exposure of Valve’s internal Jira project tracker reveals mailing lists and developer teams explicitly named "Half-Life 3" and "Half-Life 3 Core".',
+      },
+      {
+        anio: 'Aug 2017',
+        titulo: 'Marc Laidlaw Publishes "Epistle 3"',
+        categoria: '💔 Hope Crushed',
+        esperanza: 10,
+        descripcion:
+          'After retiring from Valve, lead writer Marc Laidlaw posts a gender-swapped summary ("Gertie Fremont") of what would have been Episode Three’s plot, signaling that the old version was dead.',
+      },
+      {
+        anio: 'Mar 2020',
+        titulo: 'Half-Life: Alyx Rewrites the Ending',
+        categoria: '🏢 Valve Official',
+        esperanza: 85,
+        descripcion:
+          'After 13 years of silence, Valve releases Half-Life: Alyx. Its post-credits scene alters the final moments of Episode Two and literally hands the crowbar back to Gordon Freeman.',
+      },
+      {
+        anio: 'Aug 2024',
+        titulo: '"Project White Sands" Voice Actor Leak',
+        categoria: '🕵️ Real Leak',
+        esperanza: 88,
+        descripcion:
+          'A voice actor’s resume reveals work on an unannounced Valve project codenamed "White Sands"—the real-world New Mexico missile range where Black Mesa is located.',
+      },
+      {
+        anio: '2025 – 2026',
+        titulo: '"HLX" Strings Flood Source 2 Updates',
+        categoria: '🔥 Active Development',
+        esperanza: 95,
+        descripcion:
+          'Dataminers uncover hundreds of engine strings in Counter-Strike 2 and Deadlock updates referencing a single-player project codenamed "HLX" featuring an HEV suit, Xen creatures, and vehicle physics.',
       },
     ],
     excusasGabe: [
