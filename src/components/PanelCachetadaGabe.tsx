@@ -16,8 +16,9 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
   const [onomatopeya, setOnomatopeya] = useState('');
   const [indiceFrase, setIndiceFrase] = useState(0);
   const timerGolpeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Sonido de cachetada sintetizado con Web Audio API (sin archivos MP3 externos)
+  // Sonido de cachetada sintetizado con Web Audio API (reutiliza el AudioContext)
   function reproducirSonidoCachetada() {
     try {
       const AudioCtx =
@@ -26,7 +27,13 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
           .webkitAudioContext;
       if (!AudioCtx) return;
 
-      const ctx = new AudioCtx();
+      if (!audioCtxRef.current) {
+        audioCtxRef.current = new AudioCtx();
+      }
+      const ctx = audioCtxRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
       const duracion = 0.09;
 
       // Ruido blanco corto para el "chasquido" de la cachetada
@@ -94,11 +101,13 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
         <p className="text-[11px] text-zinc-400">{t.cachetadaSubtitulo}</p>
       </div>
 
-      {/* Zona clickeable: muestra /gabe-idle.jpg en reposo y cambia a /gabe-slap.jpg al golpear */}
-      <div
+      {/* Zona interactiva accesible con botón semántico y soporte de teclado */}
+      <button
+        type="button"
         onClick={pegarCachetada}
         title={t.cachetadaSubtitulo}
-        className="relative overflow-hidden rounded-xl border-2 border-zinc-800 hover:border-orange-500/60 cursor-pointer group bg-zinc-950"
+        aria-label={t.cachetadaTitulo}
+        className="relative block w-full overflow-hidden rounded-xl border-2 border-zinc-800 hover:border-orange-500/60 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer group bg-zinc-950 p-0 text-left"
       >
         {/* Precarga oculta de la imagen de golpe para cambio instantáneo sin parpadeo */}
         <link rel="preload" as="image" href="/gabe-slap.jpg" />
@@ -127,7 +136,7 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
         <span className="absolute bottom-2 right-2 text-xl opacity-80 group-hover:scale-125 transition-transform pointer-events-none">
           👋
         </span>
-      </div>
+      </button>
 
       <div className="mt-3 text-center">
         <span className="inline-block bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold text-xs px-3 py-1 rounded-full">

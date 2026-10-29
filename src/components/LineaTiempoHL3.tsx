@@ -15,9 +15,9 @@ export function LineaTiempoHL3({ idioma = 'es' }: LineaTiempoHL3Props) {
       </div>
 
       <div className="relative border-l-2 border-orange-500/40 ml-4 sm:ml-6 pl-6 sm:pl-8 space-y-6">
-        {t.hitosLineaTiempo.map((hito, idx) => (
+        {t.hitosLineaTiempo.map((hito) => (
           <div
-            key={idx}
+            key={`${hito.anio}-${hito.titulo}`}
             className="relative bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 rounded-2xl p-5 transition-all group"
           >
             {/* Nodo circular luminoso sobre la línea vertical */}

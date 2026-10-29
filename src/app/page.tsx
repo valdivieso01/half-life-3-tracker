@@ -42,21 +42,30 @@ export default function HomePage() {
     }
   }, []);
 
-  // Recargar noticias en el idioma seleccionado (ES o EN)
+  // Recargar noticias en el idioma seleccionado (ES o EN) con cancelación
   useEffect(() => {
+    const ac = new AbortController();
+
     async function cargarNoticias() {
       setCargandoNoticias(true);
       try {
-        const res = await fetch(`/api/noticias?lang=${idioma}`);
+        const res = await fetch(`/api/noticias?lang=${idioma}`, {
+          signal: ac.signal,
+        });
         const datos = await res.json();
         setNoticias(datos);
-      } catch (err) {
-        console.error('Error cargando noticias:', err);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error cargando noticias:', err);
+        }
       } finally {
         setCargandoNoticias(false);
       }
     }
+
     cargarNoticias();
+
+    return () => ac.abort();
   }, [idioma]);
 
   // Descuenta 1 segundo cada 1000ms cuando `enfriamiento > 0`
@@ -64,7 +73,7 @@ export default function HomePage() {
     if (enfriamiento <= 0) return;
 
     const timer = setTimeout(() => {
-      setEnfriamiento(enfriamiento - 1);
+      setEnfriamiento((prev) => prev - 1);
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -271,7 +280,7 @@ export default function HomePage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {noticias.map((noticia, index) => (
                   <TarjetaNoticia
-                    key={index}
+                    key={noticia.link || noticia.titulo || index}
                     noticia={noticia}
                     idioma={idioma}
                   />

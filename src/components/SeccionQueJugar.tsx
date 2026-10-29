@@ -20,7 +20,7 @@ export function SeccionQueJugar({ idioma = 'es' }: SeccionQueJugarProps) {
             key={juego.appId}
             href={`https://store.steampowered.com/app/${juego.appId}`}
             target="_blank"
-            rel="noreferrer"
+            rel="noopener noreferrer"
             className="bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 rounded-xl overflow-hidden flex flex-col justify-between transition-all group"
           >
             <div>

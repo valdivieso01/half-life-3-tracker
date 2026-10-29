@@ -13,7 +13,7 @@ export function TarjetaNoticia({ noticia, idioma = 'es' }: TarjetaNoticiaProps) 
     <a
       href={noticia.link}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className="bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 rounded-xl p-4 flex flex-col justify-between transition-all group"
     >
       <div>

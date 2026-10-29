@@ -35,8 +35,9 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
     setTotalPaginas(datos.totalPaginas || 1);
   }
 
-  // Cada vez que cambia `paginaActual` o `filtroAutorActivo`, consultamos al Backend
+  // Cada vez que cambia `paginaActual` o `filtroAutorActivo`, consultamos al Backend con soporte para cancelación
   useEffect(() => {
+    const ac = new AbortController();
     setCargandoPagina(true);
     const params = new URLSearchParams({
       page: String(paginaActual),
@@ -46,13 +47,19 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
       params.set('autor', filtroAutorActivo.trim());
     }
 
-    fetch(`/api/plegarias?${params.toString()}`)
+    fetch(`/api/plegarias?${params.toString()}`, { signal: ac.signal })
       .then((res) => res.json())
       .then((datos: RespuestaPlegariasPaginadas) => {
         aplicarRespuestaPaginada(datos);
       })
-      .catch((err) => console.error('Error cargando plegarias:', err))
+      .catch((err: unknown) => {
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error cargando plegarias:', err);
+        }
+      })
       .finally(() => setCargandoPagina(false));
+
+    return () => ac.abort();
   }, [paginaActual, filtroAutorActivo]);
 
   function ejecutarBusqueda() {
@@ -154,6 +161,7 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
         <input
           type="text"
           placeholder={t.placeholderApodo}
+          aria-label={t.placeholderApodo}
           value={autor}
           onChange={(e) => setAutor(e.target.value)}
           className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-orange-500"
@@ -163,6 +171,7 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
           <input
             type="text"
             placeholder={t.placeholderMensaje}
+            aria-label={t.placeholderMensaje}
             value={mensaje}
             onChange={(e) => setMensaje(e.target.value)}
             onKeyDown={(e) => {
@@ -187,6 +196,7 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
           <input
             type="text"
             placeholder={t.placeholderBuscarUsuario}
+            aria-label={t.placeholderBuscarUsuario}
             value={textoBusqueda}
             onChange={(e) => setTextoBusqueda(e.target.value)}
             onKeyDown={(e) => {
