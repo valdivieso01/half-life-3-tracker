@@ -7,3 +7,6 @@ dist/
 *.tsbuildinfo
 next-env.d.ts
 
+# Reglas, skills y agentes de everything-claude-code (solo local, se reinstala con ECC)
+.agents/
+
