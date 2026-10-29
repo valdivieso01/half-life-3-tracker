@@ -75,3 +75,4 @@ export function LineaTiempoHL3({ idioma = 'es' }: LineaTiempoHL3Props) {
     </section>
   );
 }
+
