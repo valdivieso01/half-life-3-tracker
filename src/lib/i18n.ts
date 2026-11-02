@@ -35,7 +35,8 @@ export const TRADUCCIONES = {
     paginacionSiguiente: 'Siguiente →',
     cachetadaTitulo: '👋 Desquitador Black Mesa',
     cachetadaSubtitulo: 'Clickea a Gabe para apurar el desarrollo',
-    cachetadaContador: (n: number) => `Cachetadas: ${n}`,
+    cachetadaContador: (n: number) => `Cachetadas globales: ${n.toLocaleString('es-AR')}`,
+    cachetadaPersonales: (n: number) => `Tus golpes: ${n}`,
     cachetadaOnomatopeyas: ['💥 ¡PAF!', '👋 ¡PLAF!', '💥 ¡SOLTÁ EL 3!', '👋 ¡ZAS!'],
     cachetadaFrases: [
       '¡Ay! Estaba contando billetes...',
@@ -202,7 +203,8 @@ export const TRADUCCIONES = {
     paginacionSiguiente: 'Next →',
     cachetadaTitulo: '👋 Black Mesa Stress Reliever',
     cachetadaSubtitulo: 'Click Gabe to speed up development',
-    cachetadaContador: (n: number) => `Slaps: ${n}`,
+    cachetadaContador: (n: number) => `Global Slaps: ${n.toLocaleString('en-US')}`,
+    cachetadaPersonales: (n: number) => `Your hits: ${n}`,
     cachetadaOnomatopeyas: ['💥 SLAP!', '👋 SMACK!', '💥 DROP HL3!', '👋 POW!'],
     cachetadaFrases: [
       'Ouch! I was counting Steam Sale money...',

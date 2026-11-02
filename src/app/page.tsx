@@ -7,6 +7,7 @@ import { AltarPlegarias } from '@/components/AltarPlegarias';
 import { PanelCachetadaGabe } from '@/components/PanelCachetadaGabe';
 import { SeccionQueJugar } from '@/components/SeccionQueJugar';
 import { LineaTiempoHL3 } from '@/components/LineaTiempoHL3';
+import { ModalEmbed } from '@/components/ModalEmbed';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 type SeccionActiva = 'inicio' | 'juegos' | 'timeline';
@@ -14,6 +15,7 @@ type SeccionActiva = 'inicio' | 'juegos' | 'timeline';
 export default function HomePage() {
   const [idioma, setIdioma] = useState<Idioma>('es');
   const [seccionActiva, setSeccionActiva] = useState<SeccionActiva>('inicio');
+  const [modalEmbedAbierto, setModalEmbedAbierto] = useState(false);
   const t = TRADUCCIONES[idioma];
 
   const [resultado, setResultado] = useState<RespuestaSteam | null>(null);
@@ -151,28 +153,39 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Selector de idioma ES / EN */}
-        <div className="inline-flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
+        {/* Selector de idioma ES / EN y Botón Embed */}
+        <div className="flex items-center gap-2">
           <button
-            onClick={() => setIdioma('es')}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
-              idioma === 'es'
-                ? 'bg-orange-600 text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            onClick={() => setModalEmbedAbierto(true)}
+            className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-orange-500/50 text-zinc-300 hover:text-orange-400 text-xs font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition-all"
+            title={idioma === 'es' ? 'Insertar badge en tu web o Discord' : 'Embed badge on your web or Discord'}
           >
-            ES
+            <span>🔗</span>
+            <span>{idioma === 'es' ? 'Insertar' : 'Embed'}</span>
           </button>
-          <button
-            onClick={() => setIdioma('en')}
-            className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
-              idioma === 'en'
-                ? 'bg-orange-600 text-white'
-                : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            EN
-          </button>
+
+          <div className="inline-flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
+            <button
+              onClick={() => setIdioma('es')}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                idioma === 'es'
+                  ? 'bg-orange-600 text-white'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              ES
+            </button>
+            <button
+              onClick={() => setIdioma('en')}
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
+                idioma === 'en'
+                  ? 'bg-orange-600 text-white'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              EN
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -302,6 +315,13 @@ export default function HomePage() {
       <div className={seccionActiva === 'timeline' ? 'w-full' : 'hidden'}>
         <LineaTiempoHL3 idioma={idioma} />
       </div>
+
+      {/* Modal para copiar Badge y Embed */}
+      <ModalEmbed
+        idioma={idioma}
+        abierto={modalEmbedAbierto}
+        alCerrar={() => setModalEmbedAbierto(false)}
+      />
     </main>
   );
 }

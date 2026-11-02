@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 interface PanelCachetadaGabeProps {
@@ -10,13 +10,49 @@ interface PanelCachetadaGabeProps {
 export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
   const t = TRADUCCIONES[idioma];
 
-  const [cachetadas, setCachetadas] = useState(0);
+  const [cachetadasGlobales, setCachetadasGlobales] = useState(0);
+  const [cachetadasLocales, setCachetadasLocales] = useState(0);
   const [espejado, setEspejado] = useState(false);
   const [golpeando, setGolpeando] = useState(false);
   const [onomatopeya, setOnomatopeya] = useState('');
   const [indiceFrase, setIndiceFrase] = useState(0);
   const timerGolpeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
+
+  // Buffer para sincronizar clicks al backend en lotes (batching)
+  const clicksPendientesRef = useRef(0);
+  const syncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cargar el conteo global desde la base de datos al inicio
+  useEffect(() => {
+    fetch('/api/cachetadas')
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.total === 'number') {
+          setCachetadasGlobales(data.total);
+        }
+      })
+      .catch((err) => console.error('Error cargando conteo global de cachetadas:', err));
+  }, []);
+
+  function sincronizarConServidor() {
+    if (clicksPendientesRef.current <= 0) return;
+    const cantidad = clicksPendientesRef.current;
+    clicksPendientesRef.current = 0;
+
+    fetch('/api/cachetadas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cantidad }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (typeof data.total === 'number') {
+          setCachetadasGlobales(data.total);
+        }
+      })
+      .catch((err) => console.error('Error sincronizando cachetadas:', err));
+  }
 
   // Sonido de cachetada sintetizado con Web Audio API (reutiliza el AudioContext)
   function reproducirSonidoCachetada() {
@@ -68,10 +104,20 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
   function pegarCachetada() {
     reproducirSonidoCachetada();
 
-    // Espejamos la imagen hacia el otro lado en cada golpe
+    // Actualización visual inmediata e intuitiva
     setEspejado((prev) => !prev);
-    setCachetadas((prev) => prev + 1);
+    setCachetadasGlobales((prev) => prev + 1);
+    setCachetadasLocales((prev) => prev + 1);
     setGolpeando(true);
+
+    // Acumula el golpe en lote para no saturar el endpoint
+    clicksPendientesRef.current += 1;
+    if (syncTimerRef.current) {
+      clearTimeout(syncTimerRef.current);
+    }
+    syncTimerRef.current = setTimeout(() => {
+      sincronizarConServidor();
+    }, 600);
 
     const textoGolpe =
       t.cachetadaOnomatopeyas[
@@ -83,7 +129,6 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
     if (timerGolpeRef.current) {
       clearTimeout(timerGolpeRef.current);
     }
-    // Mantiene la cara de cacheteado durante 450ms y luego vuelve a la sonrisa sobradora (idle)
     timerGolpeRef.current = setTimeout(() => {
       setGolpeando(false);
     }, 450);
@@ -138,13 +183,19 @@ export function PanelCachetadaGabe({ idioma = 'es' }: PanelCachetadaGabeProps) {
         </span>
       </button>
 
-      <div className="mt-3 text-center">
+      <div className="mt-3 text-center flex flex-col items-center gap-1">
         <span className="inline-block bg-orange-500/10 border border-orange-500/30 text-orange-400 font-bold text-xs px-3 py-1 rounded-full">
-          👋 {t.cachetadaContador(cachetadas)}
+          👋 {t.cachetadaContador(cachetadasGlobales)}
         </span>
 
-        {cachetadas > 0 && (
-          <p className="mt-2 text-[11px] text-zinc-300 italic leading-snug">
+        {cachetadasLocales > 0 && (
+          <span className="text-[10px] text-zinc-400 font-medium">
+            {t.cachetadaPersonales(cachetadasLocales)}
+          </span>
+        )}
+
+        {cachetadasLocales > 0 && (
+          <p className="mt-1 text-[11px] text-zinc-300 italic leading-snug">
             &ldquo;{t.cachetadaFrases[indiceFrase]}&rdquo;
           </p>
         )}

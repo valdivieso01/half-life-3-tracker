@@ -33,6 +33,20 @@ async function asegurarTablasPostgres() {
     ON CONFLICT (id) DO NOTHING;
   `);
 
+  // Tabla para el contador global de cachetadas a Gabe
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS cachetadas_gabe (
+      id INT PRIMARY KEY,
+      total INT NOT NULL DEFAULT 0
+    );
+  `);
+
+  await pool.query(`
+    INSERT INTO cachetadas_gabe (id, total)
+    VALUES (1, 0)
+    ON CONFLICT (id) DO NOTHING;
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS plegarias_hl3 (
       id BIGINT PRIMARY KEY,
@@ -73,6 +87,26 @@ export async function incrementarContadorDB(): Promise<number> {
     WHERE id = 1
     RETURNING total;
   `);
+  return res.rows[0].total;
+}
+
+export async function obtenerCachetadasDB(): Promise<number> {
+  await asegurarTablasPostgres();
+  const res = await pool.query(`
+    SELECT total FROM cachetadas_gabe WHERE id = 1;
+  `);
+  return res.rows[0]?.total ?? 0;
+}
+
+export async function incrementarCachetadasDB(cantidad = 1): Promise<number> {
+  await asegurarTablasPostgres();
+  const incremento = Math.max(1, Math.min(cantidad, 50)); // Tope de seguridad por lote
+  const res = await pool.query(`
+    UPDATE cachetadas_gabe
+    SET total = total + $1
+    WHERE id = 1
+    RETURNING total;
+  `, [incremento]);
   return res.rows[0].total;
 }
 
