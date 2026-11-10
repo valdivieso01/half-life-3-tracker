@@ -115,7 +115,7 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
             <div className="grid grid-cols-2 gap-3 text-center sm:text-left">
               <div className="bg-zinc-900/50 border border-zinc-800/80 p-3 rounded-lg">
                 <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider block mb-0.5">
-                  2007 vs Hoy
+                  {idioma === 'es' ? '2007 vs Hoy' : '2007 vs Today'}
                 </span>
                 <p className="text-sm font-bold text-zinc-200">
                   {resultado.edad2007} → {resultado.edadHoy} {idioma === 'es' ? 'años' : 'yrs'}
@@ -124,7 +124,7 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
 
               <div className="bg-orange-500/10 border border-orange-500/30 p-3 rounded-lg flex flex-col justify-center text-center">
                 <span className="text-[10px] font-bold text-orange-400 uppercase tracking-wider block mb-0.5">
-                  Vida Esperando
+                  {idioma === 'es' ? 'Vida Esperando' : 'Life Waiting'}
                 </span>
                 <p className="text-2xl font-black text-orange-500 leading-none">
                   {resultado.porcentajeVida}%
