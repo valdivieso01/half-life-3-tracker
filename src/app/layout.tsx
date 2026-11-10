@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { Analytics } from '@vercel/analytics/next';
+import { FooterSitio } from '@/components/FooterSitio';
 // @ts-ignore -- CSS modules are provided by the Next.js build pipeline.
 import './globals.css';
 
@@ -117,6 +118,7 @@ export default function RootLayout({
           strategy="afterInteractive"
         />
         {children}
+        <FooterSitio />
         <Analytics />
       </body>
     </html>
