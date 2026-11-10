@@ -15,6 +15,28 @@ const pool = new Pool({
   connectionString,
 });
 
+export const PLEGARIAS_FALLBACK_DEFAULT: Plegaria[] = [
+  {
+    id: 1793581961810,
+    autor: 'Tyler',
+    mensaje:
+      'I bought the Orange Box on physical DVD back in high school. My hair is gray now Gabe, please just let Freeman finish what he started',
+    fecha: 'Nov 2, 2026',
+    amenes: 1,
+    ipAutor: 'seed',
+    ipsAmen: [],
+  },
+  {
+    id: 1793062323336,
+    autor: 'Javier',
+    mensaje: 'Largalo gordo antes de que me jubile, tengo la palanca lista desde 2007.',
+    fecha: '26 de oct de 2026',
+    amenes: 2,
+    ipAutor: 'seed',
+    ipsAmen: [],
+  },
+];
+
 let tablasInicializadas = false;
 
 async function asegurarTablasPostgres() {
@@ -119,66 +141,83 @@ export async function obtenerPlegariasPaginadasDB(
   porPagina = 5,
   busquedaAutor = ''
 ): Promise<RespuestaPlegariasPaginadas> {
-  await asegurarTablasPostgres();
-
   const paginaSegura = Math.max(1, pagina);
   const offset = (paginaSegura - 1) * porPagina;
   const filtroLimpio = busquedaAutor.trim();
 
-  let total = 0;
-  let res;
+  try {
+    await asegurarTablasPostgres();
 
-  if (filtroLimpio) {
-    const patron = `%${filtroLimpio}%`;
-    const conteoRes = await pool.query(
-      'SELECT COUNT(*)::int AS total FROM plegarias_hl3 WHERE autor ILIKE $1',
-      [patron]
-    );
-    total = conteoRes.rows[0].total;
+    let total = 0;
+    let res;
 
-    res = await pool.query(
-      `
-      SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
-      FROM plegarias_hl3
-      WHERE autor ILIKE $1
-      ORDER BY id DESC
-      LIMIT $2 OFFSET $3;
-      `,
-      [patron, porPagina, offset]
-    );
-  } else {
-    const conteoRes = await pool.query('SELECT COUNT(*)::int AS total FROM plegarias_hl3');
-    total = conteoRes.rows[0].total;
+    if (filtroLimpio) {
+      const patron = `%${filtroLimpio}%`;
+      const conteoRes = await pool.query(
+        'SELECT COUNT(*)::int AS total FROM plegarias_hl3 WHERE autor ILIKE $1',
+        [patron]
+      );
+      total = conteoRes.rows[0].total;
 
-    res = await pool.query(
-      `
-      SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
-      FROM plegarias_hl3
-      ORDER BY id DESC
-      LIMIT $1 OFFSET $2;
-      `,
-      [porPagina, offset]
-    );
+      res = await pool.query(
+        `
+        SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
+        FROM plegarias_hl3
+        WHERE autor ILIKE $1
+        ORDER BY id DESC
+        LIMIT $2 OFFSET $3;
+        `,
+        [patron, porPagina, offset]
+      );
+    } else {
+      const conteoRes = await pool.query('SELECT COUNT(*)::int AS total FROM plegarias_hl3');
+      total = conteoRes.rows[0].total;
+
+      res = await pool.query(
+        `
+        SELECT id, autor, mensaje, fecha, amenes, ip_autor, ips_amen
+        FROM plegarias_hl3
+        ORDER BY id DESC
+        LIMIT $1 OFFSET $2;
+        `,
+        [porPagina, offset]
+      );
+    }
+
+    const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
+
+    const plegarias: Plegaria[] = res.rows.map((f) => ({
+      id: Number(f.id),
+      autor: f.autor,
+      mensaje: f.mensaje,
+      fecha: f.fecha,
+      amenes: Number(f.amenes),
+      ipAutor: f.ip_autor,
+      ipsAmen: Array.isArray(f.ips_amen) ? f.ips_amen : [],
+    }));
+
+    return {
+      plegarias,
+      total,
+      paginaActual: paginaSegura,
+      totalPaginas,
+    };
+  } catch (error) {
+    console.warn('⚠️ Error al consultar Postgres en obtenerPlegariasPaginadasDB, usando datos de contingencia:', error);
+    const filtradas = filtroLimpio
+      ? PLEGARIAS_FALLBACK_DEFAULT.filter((p) =>
+          p.autor.toLowerCase().includes(filtroLimpio.toLowerCase())
+        )
+      : PLEGARIAS_FALLBACK_DEFAULT;
+    const total = filtradas.length;
+    const paginadas = filtradas.slice(offset, offset + porPagina);
+    return {
+      plegarias: paginadas,
+      total,
+      paginaActual: paginaSegura,
+      totalPaginas: Math.max(1, Math.ceil(total / porPagina)),
+    };
   }
-
-  const totalPaginas = Math.max(1, Math.ceil(total / porPagina));
-
-  const plegarias: Plegaria[] = res.rows.map((f) => ({
-    id: Number(f.id),
-    autor: f.autor,
-    mensaje: f.mensaje,
-    fecha: f.fecha,
-    amenes: Number(f.amenes),
-    ipAutor: f.ip_autor,
-    ipsAmen: Array.isArray(f.ips_amen) ? f.ips_amen : [],
-  }));
-
-  return {
-    plegarias,
-    total,
-    paginaActual: paginaSegura,
-    totalPaginas,
-  };
 }
 
 export async function existePlegariaDeIpDB(ip: string): Promise<boolean> {

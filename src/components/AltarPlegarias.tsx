@@ -26,6 +26,8 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
   // Estados para el buscador por usuario
   const [textoBusqueda, setTextoBusqueda] = useState('');
   const [filtroAutorActivo, setFiltroAutorActivo] = useState('');
+  const [errorCarga, setErrorCarga] = useState(false);
+  const [reintentos, setReintentos] = useState(0);
 
   // Función que sincroniza el estado de React con la respuesta paginada del Backend
   function aplicarRespuestaPaginada(datos: RespuestaPlegariasPaginadas) {
@@ -39,6 +41,8 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
   useEffect(() => {
     const ac = new AbortController();
     setCargandoPagina(true);
+    setErrorCarga(false);
+
     const params = new URLSearchParams({
       page: String(paginaActual),
       limit: String(POR_PAGINA),
@@ -48,19 +52,28 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
     }
 
     fetch(`/api/plegarias?${params.toString()}`, { signal: ac.signal })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((datos: RespuestaPlegariasPaginadas) => {
-        aplicarRespuestaPaginada(datos);
+        if (datos && Array.isArray(datos.plegarias)) {
+          aplicarRespuestaPaginada(datos);
+          setErrorCarga(false);
+        } else {
+          setErrorCarga(true);
+        }
       })
       .catch((err: unknown) => {
         if (err instanceof Error && err.name !== 'AbortError') {
           console.error('Error cargando plegarias:', err);
+          setErrorCarga(true);
         }
       })
       .finally(() => setCargandoPagina(false));
 
     return () => ac.abort();
-  }, [paginaActual, filtroAutorActivo]);
+  }, [paginaActual, filtroAutorActivo, reintentos]);
 
   function ejecutarBusqueda() {
     setPaginaActual(1);
@@ -228,10 +241,26 @@ export function AltarPlegarias({ idioma = 'es' }: AltarPlegariasProps) {
 
       {/* Lista de plegarias de la página actual */}
       <div className={`space-y-3 transition-opacity ${cargandoPagina ? 'opacity-50' : 'opacity-100'}`}>
-        {plegarias.length === 0 ? (
+        {errorCarga ? (
+          <div className="bg-zinc-900/30 border border-red-900/40 rounded-xl p-6 text-center text-sm text-red-400">
+            <p className="mb-3">{t.errorCargarPlegarias}</p>
+            <button
+              onClick={() => setReintentos((prev) => prev + 1)}
+              className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold px-4 py-2 rounded-lg border border-zinc-700 cursor-pointer"
+            >
+              {t.reintentar}
+            </button>
+          </div>
+        ) : plegarias.length === 0 ? (
           <div className="bg-zinc-900/30 border border-zinc-800/60 rounded-xl p-6 text-center text-sm text-zinc-500">
-            {t.sinResultadosUsuario}{' '}
-            <strong className="text-zinc-300">&quot;{filtroAutorActivo}&quot;</strong>.
+            {filtroAutorActivo ? (
+              <>
+                {t.sinResultadosUsuario}{' '}
+                <strong className="text-zinc-300">&quot;{filtroAutorActivo}&quot;</strong>.
+              </>
+            ) : (
+              <span>{t.sinPlegariasAun}</span>
+            )}
           </div>
         ) : (
           plegarias.map((p) => (

@@ -11,11 +11,12 @@ import { SeccionFuentes } from '@/components/SeccionFuentes';
 import { ModalEmbed } from '@/components/ModalEmbed';
 import { CalculadoraVida } from '@/components/CalculadoraVida';
 import { RadioBlackMesa } from '@/components/RadioBlackMesa';
+import { ArcadeHalfLife } from '@/components/ArcadeHalfLife';
 import { ARTICULOS_EDITORIALES } from '@/lib/articulos';
 import Link from 'next/link';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
-type SeccionActiva = 'inicio' | 'noticias' | 'juegos' | 'timeline' | 'fuentes';
+type SeccionActiva = 'inicio' | 'noticias' | 'juegos' | 'timeline' | 'fuentes' | 'arcade';
 
 export default function HomePage() {
   const [idioma, setIdioma] = useState<Idioma>('es');
@@ -177,6 +178,17 @@ export default function HomePage() {
             }`}
           >
             {t.tabFuentes}
+          </button>
+
+          <button
+            onClick={() => setSeccionActiva('arcade')}
+            className={`text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+              seccionActiva === 'arcade'
+                ? 'bg-orange-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+            }`}
+          >
+            {t.tabArcade}
           </button>
         </div>
 
@@ -406,6 +418,11 @@ export default function HomePage() {
       {/* SECCIÓN 4: FUENTES Y LEAKERS */}
       <div className={seccionActiva === 'fuentes' ? 'w-full' : 'hidden'}>
         <SeccionFuentes idioma={idioma} />
+      </div>
+
+      {/* SECCIÓN 5: ARCADE / MINIJUEGO DE HALF-LIFE */}
+      <div className={seccionActiva === 'arcade' ? 'w-full' : 'hidden'}>
+        <ArcadeHalfLife idioma={idioma} />
       </div>
 
       {/* Modal para copiar Badge y Embed */}

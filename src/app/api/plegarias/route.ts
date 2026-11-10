@@ -19,13 +19,23 @@ function obtenerIpCliente(request: Request): string {
 }
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const pagina = Number(searchParams.get('page')) || 1;
-  const porPagina = Number(searchParams.get('limit')) || POR_PAGINA_DEFAULT;
-  const busquedaAutor = searchParams.get('autor') || '';
+  try {
+    const { searchParams } = new URL(request.url);
+    const pagina = Number(searchParams.get('page')) || 1;
+    const porPagina = Number(searchParams.get('limit')) || POR_PAGINA_DEFAULT;
+    const busquedaAutor = searchParams.get('autor') || '';
 
-  const resultado = await obtenerPlegariasPaginadasDB(pagina, porPagina, busquedaAutor);
-  return NextResponse.json(resultado);
+    const resultado = await obtenerPlegariasPaginadasDB(pagina, porPagina, busquedaAutor);
+    return NextResponse.json(resultado);
+  } catch (error) {
+    console.error('Error en GET /api/plegarias:', error);
+    return NextResponse.json({
+      plegarias: [],
+      total: 0,
+      paginaActual: 1,
+      totalPaginas: 1,
+    });
+  }
 }
 
 export async function POST(request: Request) {
