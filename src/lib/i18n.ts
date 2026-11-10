@@ -106,8 +106,68 @@ export const TRADUCCIONES = {
       },
     ],
     tabInicio: '📡 Radar y Altar',
-    tabJuegos: '🎮 Juegos para la Espera',
-    tabTimeline: '📜 Cronología de una Espera',
+    tabJuegos: '🎮 Qué Jugar',
+    tabTimeline: '📜 Cronología',
+    tabFuentes: '🕵️ Fuentes y Leakers',
+    fuentesTitulo: '🕵️ Fuentes, Filtradores y Archiveros de Valve',
+    fuentesSubtitulo: 'Las personas, dataminers y comunidades que han mantenido viva la llama de Half-Life 3 analizando cada actualización de Valve.',
+    fuentesBotonVisitar: 'Ir a la fuente →',
+    fuentesLista: [
+      {
+        nombre: 'Tyler McVicker',
+        canal: 'YouTube / X',
+        rol: 'Reportero e Investigador de Valve',
+        descripcion:
+          'El periodista independiente más influyente sobre Valve en la última década. Lleva años analizando strings de código, entrevistando exempleados y reportando filtraciones como Project White Sands y HLX.',
+        link: 'https://www.youtube.com/@TylerMcV',
+        badge: 'Top Investigador',
+      },
+      {
+        nombre: 'SteamDB (Pavel Djundik)',
+        canal: 'Web / X (@thexpaw)',
+        rol: 'Rastreador de la API y Base de Datos de Steam',
+        descripcion:
+          'Monitorea en tiempo real cada cambio, appID, paquete y actualización en los servidores de Steam. Es la fuente técnica definitiva donde primero aparecen los registros y cambios de Valve.',
+        link: 'https://steamdb.info',
+        badge: 'Base de Datos Oficial',
+      },
+      {
+        nombre: 'Gabe Follower',
+        canal: 'YouTube / X (@gabefollower)',
+        rol: 'Dataminer de Source 2',
+        descripcion:
+          'Especialista en desarmar parches de Counter-Strike 2, Dota 2 y Deadlock para encontrar código residual, assets huérfanos y referencias al motor de Half-Life 3 / HLX.',
+        link: 'https://twitter.com/gabefollower',
+        badge: 'Datamining Source 2',
+      },
+      {
+        nombre: 'r/HalfLife (Reddit)',
+        canal: 'Comunidad Reddit (~500k miembros)',
+        rol: 'El epicentro de la comunidad y teorías',
+        descripcion:
+          'El foro central donde fans, desarrolladores y archivistas de todo el mundo debaten teorías, comparten homenajes y analizan cualquier novedad al segundo de publicarse.',
+        link: 'https://www.reddit.com/r/HalfLife/',
+        badge: 'Comunidad Global',
+      },
+      {
+        nombre: 'ValveTime / Combine OverWiki',
+        canal: 'Enciclopedia Comunitaria',
+        rol: 'Archiveros del Lore y Desarrollo',
+        descripcion:
+          'El archivo histórico más minucioso sobre el universo Half-Life, con documentación detallada de cada versión cancelada, entrevistas con guionistas y arte conceptual filtrado.',
+        link: 'https://combineoverwiki.net',
+        badge: 'Archivo Histórico',
+      },
+      {
+        nombre: 'LambdaGeneration',
+        canal: 'Plataforma Comunitaria',
+        rol: 'Red social dedicada a Valve',
+        descripcion:
+          'Una plataforma y red social creada exclusivamente para fans de Half-Life y Valve, con noticias curadas, eventos comunitarios y creaciones de mods.',
+        link: 'https://lambdageneration.com',
+        badge: 'Comunidad',
+      },
+    ],
     timelineTitulo: '📜 Cronología de una Espera Eterna (2007 – 2026)',
     timelineSubtitulo: 'Todos los anuncios, cancelaciones secretas y filtraciones reales de Half-Life 3',
     timelineNivelEsperanza: 'Nivel de esperanza de la comunidad',
@@ -287,8 +347,68 @@ export const TRADUCCIONES = {
       },
     ],
     tabInicio: '📡 Radar & Altar',
-    tabJuegos: '🎮 Games for the Wait',
-    tabTimeline: '📜 Chronology of a Wait',
+    tabJuegos: '🎮 What to Play',
+    tabTimeline: '📜 Timeline',
+    tabFuentes: '🕵️ Sources & Leakers',
+    fuentesTitulo: '🕵️ Valve Sources, Leakers & Archivists',
+    fuentesSubtitulo: 'The key investigators, dataminers, and communities who keep the Half-Life 3 flame alive by analyzing every Valve update.',
+    fuentesBotonVisitar: 'Visit source →',
+    fuentesLista: [
+      {
+        nombre: 'Tyler McVicker',
+        canal: 'YouTube / X',
+        rol: 'Valve Investigative Journalist',
+        descripcion:
+          'The most prolific independent reporter covering Valve over the last decade. Has spent years datamining builds, interviewing former Valve devs, and breaking news on Project White Sands and HLX.',
+        link: 'https://www.youtube.com/@TylerMcV',
+        badge: 'Top Investigator',
+      },
+      {
+        nombre: 'SteamDB (Pavel Djundik)',
+        canal: 'Web / X (@thexpaw)',
+        rol: 'Steam API & Database Tracker',
+        descripcion:
+          'Real-time tracking of every appID, depot, package, and backend commit across Steam servers. The definitive technical source where Valve registrations surface first.',
+        link: 'https://steamdb.info',
+        badge: 'Primary Tech Source',
+      },
+      {
+        nombre: 'Gabe Follower',
+        canal: 'YouTube / X (@gabefollower)',
+        rol: 'Source 2 Dataminer',
+        descripcion:
+          'Specialist in reverse-engineering Counter-Strike 2, Dota 2, and Deadlock patches to extract residual code strings, orphaned assets, and Half-Life 3 / HLX references.',
+        link: 'https://twitter.com/gabefollower',
+        badge: 'Source 2 Datamining',
+      },
+      {
+        nombre: 'r/HalfLife (Reddit)',
+        canal: 'Reddit Community (~500k members)',
+        rol: 'Hub of the Global Half-Life Community',
+        descripcion:
+          'The central discussion board where fans, developers, and theorists dissect rumors, share fan-projects, and track clues seconds after they appear.',
+        link: 'https://www.reddit.com/r/HalfLife/',
+        badge: 'Global Community',
+      },
+      {
+        nombre: 'Combine OverWiki',
+        canal: 'Community Encyclopedia',
+        rol: 'Lore & Development Archivists',
+        descripcion:
+          'The most exhaustive living archive of Half-Life lore, detailing every canceled prototype, developer interview, and piece of leaked concept art.',
+        link: 'https://combineoverwiki.net',
+        badge: 'Historical Archive',
+      },
+      {
+        nombre: 'LambdaGeneration',
+        canal: 'Dedicated Community Platform',
+        rol: 'Valve fan portal & social network',
+        descripcion:
+          'A specialized community platform crafted purely for Valve fans, featuring verified updates, mod releases, and community spotlights.',
+        link: 'https://lambdageneration.com',
+        badge: 'Community',
+      },
+    ],
     timelineTitulo: '📜 Timeline of an Eternal Wait (2007 – 2026)',
     timelineSubtitulo: 'Every official milestone, secret cancellation, and real datamined leak of Half-Life 3',
     timelineNivelEsperanza: 'Community hope meter',

@@ -7,11 +7,12 @@ import { AltarPlegarias } from '@/components/AltarPlegarias';
 import { PanelCachetadaGabe } from '@/components/PanelCachetadaGabe';
 import { SeccionQueJugar } from '@/components/SeccionQueJugar';
 import { LineaTiempoHL3 } from '@/components/LineaTiempoHL3';
+import { SeccionFuentes } from '@/components/SeccionFuentes';
 import { ModalEmbed } from '@/components/ModalEmbed';
 import { CalculadoraVida } from '@/components/CalculadoraVida';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
-type SeccionActiva = 'inicio' | 'juegos' | 'timeline';
+type SeccionActiva = 'inicio' | 'juegos' | 'timeline' | 'fuentes';
 
 export default function HomePage() {
   const [idioma, setIdioma] = useState<Idioma>('es');
@@ -151,6 +152,17 @@ export default function HomePage() {
             }`}
           >
             {t.tabTimeline}
+          </button>
+
+          <button
+            onClick={() => setSeccionActiva('fuentes')}
+            className={`text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+              seccionActiva === 'fuentes'
+                ? 'bg-orange-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+            }`}
+          >
+            {t.tabFuentes}
           </button>
         </div>
 
@@ -320,6 +332,11 @@ export default function HomePage() {
       {/* SECCIÓN 3: LÍNEA DE TIEMPO (2007 - 2026) */}
       <div className={seccionActiva === 'timeline' ? 'w-full' : 'hidden'}>
         <LineaTiempoHL3 idioma={idioma} />
+      </div>
+
+      {/* SECCIÓN 4: FUENTES Y LEAKERS */}
+      <div className={seccionActiva === 'fuentes' ? 'w-full' : 'hidden'}>
+        <SeccionFuentes idioma={idioma} />
       </div>
 
       {/* Modal para copiar Badge y Embed */}
