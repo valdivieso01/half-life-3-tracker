@@ -10,6 +10,7 @@ import { LineaTiempoHL3 } from '@/components/LineaTiempoHL3';
 import { SeccionFuentes } from '@/components/SeccionFuentes';
 import { ModalEmbed } from '@/components/ModalEmbed';
 import { CalculadoraVida } from '@/components/CalculadoraVida';
+import { RadioBlackMesa } from '@/components/RadioBlackMesa';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 type SeccionActiva = 'inicio' | 'juegos' | 'timeline' | 'fuentes';
@@ -166,8 +167,10 @@ export default function HomePage() {
           </button>
         </div>
 
-        {/* Selector de idioma ES / EN y Botón Embed */}
-        <div className="flex items-center gap-2">
+        {/* Selector de idioma ES / EN, Botón Embed y Radio Black Mesa */}
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <RadioBlackMesa idioma={idioma} />
+
           <button
             onClick={() => setModalEmbedAbierto(true)}
             className="flex items-center gap-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-orange-500/50 text-zinc-300 hover:text-orange-400 text-xs font-semibold px-3 py-1.5 rounded-xl cursor-pointer transition-all"
