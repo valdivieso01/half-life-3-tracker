@@ -66,10 +66,10 @@ export default function PaginaSobreNosotros() {
           <p>
             Puedes comunicarte por correo electrónico directamente a:{' '}
             <a
-              href="mailto:contacto@radarblackmesa.online"
+              href="mailto:hjavier.valdivieso@outlook.es"
               className="text-orange-400 font-bold hover:underline"
             >
-              contacto@radarblackmesa.online
+              hjavier.valdivieso@outlook.es
             </a>
           </p>
         </section>
