@@ -119,11 +119,11 @@ export const TRADUCCIONES = {
     fuentesLista: [
       {
         nombre: 'Tyler McVicker',
-        canal: 'YouTube / X',
+        canal: 'YouTube (@TylerMcVicker1) / X',
         rol: 'Reportero e Investigador de Valve',
         descripcion:
-          'El periodista independiente más influyente sobre Valve en la última década. Lleva años analizando strings de código, entrevistando exempleados y reportando filtraciones como Project White Sands y HLX.',
-        link: 'https://www.youtube.com/@TylerMcV',
+          'El periodista independiente más influyente sobre Valve en la última década (creador original de Valve News Network). Lleva años analizando strings de código, entrevistando exempleados y reportando filtraciones como Project White Sands y HLX.',
+        link: 'https://www.youtube.com/@TylerMcVicker1',
         badge: 'Top Investigador',
       },
       {
@@ -154,7 +154,7 @@ export const TRADUCCIONES = {
         badge: 'Comunidad Global',
       },
       {
-        nombre: 'ValveTime / Combine OverWiki',
+        nombre: 'Combine OverWiki',
         canal: 'Enciclopedia Comunitaria',
         rol: 'Archiveros del Lore y Desarrollo',
         descripcion:
@@ -364,11 +364,11 @@ export const TRADUCCIONES = {
     fuentesLista: [
       {
         nombre: 'Tyler McVicker',
-        canal: 'YouTube / X',
+        canal: 'YouTube (@TylerMcVicker1) / X',
         rol: 'Valve Investigative Journalist',
         descripcion:
-          'The most prolific independent reporter covering Valve over the last decade. Has spent years datamining builds, interviewing former Valve devs, and breaking news on Project White Sands and HLX.',
-        link: 'https://www.youtube.com/@TylerMcV',
+          'The most prolific independent reporter covering Valve over the last decade (original creator of Valve News Network). Has spent years datamining builds, interviewing former Valve devs, and breaking news on Project White Sands and HLX.',
+        link: 'https://www.youtube.com/@TylerMcVicker1',
         badge: 'Top Investigator',
       },
       {

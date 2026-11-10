@@ -19,6 +19,37 @@ export function RadioBlackMesa({ idioma = 'es' }: RadioBlackMesaProps) {
     }
   }, [volumen]);
 
+  // Intentar reproducir automáticamente al montar o al primer click en la página
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = volumen;
+
+    // Intentamos reproducir directamente
+    const intentoPlay = audio.play();
+    if (intentoPlay !== undefined) {
+      intentoPlay
+        .then(() => setReproduciendo(true))
+        .catch(() => {
+          // Si el navegador bloqueó el autoplay sin interacción, escuchamos el primer click en cualquier parte
+          const activarConInteraccion = () => {
+            audio
+              .play()
+              .then(() => {
+                setReproduciendo(true);
+                window.removeEventListener('click', activarConInteraccion);
+                window.removeEventListener('keydown', activarConInteraccion);
+              })
+              .catch(() => {});
+          };
+
+          window.addEventListener('click', activarConInteraccion, { once: true });
+          window.addEventListener('keydown', activarConInteraccion, { once: true });
+        });
+    }
+  }, []);
+
   function alternarReproduccion() {
     if (!audioRef.current) return;
 
