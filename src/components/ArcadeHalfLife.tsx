@@ -879,25 +879,26 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
               </p>
 
               <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+                <a
+                  href="https://x8bitrain.github.io/webXash/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg shadow-orange-600/30 cursor-pointer transition-all hover:scale-105 inline-flex items-center gap-2"
+                >
+                  <span>🚀</span>
+                  <span>{esIngles ? 'Play Half-Life 1 (Full Screen)' : 'Jugar Half-Life 1 (Pantalla Completa)'}</span>
+                </a>
+
                 <button
                   onClick={() => {
                     setCargando3D(true);
                     setJuego3DIniciado(true);
                   }}
-                  className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-lg cursor-pointer transition-all hover:scale-105"
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold px-4 py-3.5 rounded-xl transition-colors inline-flex items-center gap-2 cursor-pointer"
                 >
-                  🚀 {esIngles ? 'Launch in Browser' : 'Iniciar en el Navegador'}
+                  <span>📺</span>
+                  <span>{esIngles ? 'Load in-page Player (WebXash)' : 'Cargar en Visor Integrado (WebXash)'}</span>
                 </button>
-
-                <a
-                  href="https://x8bitrain.github.io/webXash/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold px-4 py-3 rounded-xl transition-colors inline-flex items-center gap-2"
-                >
-                  <span>↗</span>
-                  <span>{esIngles ? 'Open in New Tab (Full Screen)' : 'Abrir en Nueva Pestaña (Pantalla Completa)'}</span>
-                </a>
               </div>
             </div>
           ) : (

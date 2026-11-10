@@ -7,6 +7,9 @@ import './globals.css';
 
 const URL_SITIO = 'https://www.radarblackmesa.online';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 /**
  * METADATA SEO DE NEXT.JS (src/app/layout.tsx)
  * Next.js convierte este objeto automáticamente en etiquetas <title>, <meta name="description">,
