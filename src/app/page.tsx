@@ -8,6 +8,7 @@ import { PanelCachetadaGabe } from '@/components/PanelCachetadaGabe';
 import { SeccionQueJugar } from '@/components/SeccionQueJugar';
 import { LineaTiempoHL3 } from '@/components/LineaTiempoHL3';
 import { ModalEmbed } from '@/components/ModalEmbed';
+import { CalculadoraVida } from '@/components/CalculadoraVida';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
 type SeccionActiva = 'inicio' | 'juegos' | 'timeline';
@@ -273,6 +274,11 @@ export default function HomePage() {
           <div className="flex justify-center lg:justify-end">
             <PanelCachetadaGabe idioma={idioma} />
           </div>
+        </div>
+
+        {/* CALCULADORA DE VIDA ESPERANDO */}
+        <div className="mt-12 w-full">
+          <CalculadoraVida idioma={idioma} />
         </div>
 
         {/* Grilla de 2 columnas en escritorio: Noticias a la izquierda y Altar a la derecha */}
