@@ -112,6 +112,44 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
           </p>
         )}
 
+        {/* Estado inicial antes de calcular: guía contextual y curiosidad */}
+        {!resultado && (
+          <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-xl p-5 mt-2 flex flex-col justify-between gap-4">
+            <div className="flex items-start gap-3.5">
+              <span className="text-2xl select-none">📻</span>
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-zinc-200">
+                  {idioma === 'es' ? 'Archivo Histórico de Black Mesa' : 'Black Mesa Historical Archives'}
+                </h4>
+                <p className="text-xs text-zinc-400 leading-relaxed">
+                  {idioma === 'es'
+                    ? 'Half-Life 2: Episode Two se publicó el 10 de octubre de 2007. Ingresa tu año de nacimiento para comparar tu línea temporal con los casi 20 años de espera de Gordon Freeman.'
+                    : 'Half-Life 2: Episode Two was released on October 10, 2007. Enter your birth year above to compare your personal timeline against Gordon Freeman’s nearly two decades of waiting.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-zinc-900 text-left">
+              <div className="bg-zinc-900/40 p-2.5 rounded-lg border border-zinc-800/60">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">
+                  {idioma === 'es' ? 'Fecha Episode Two' : 'Episode Two Date'}
+                </span>
+                <span className="text-xs font-semibold text-orange-400">
+                  10 Oct 2007
+                </span>
+              </div>
+              <div className="bg-zinc-900/40 p-2.5 rounded-lg border border-zinc-800/60">
+                <span className="text-[10px] text-zinc-500 uppercase font-bold tracking-wider block">
+                  {idioma === 'es' ? 'Estado del Reactor' : 'Reactor Status'}
+                </span>
+                <span className="text-xs font-semibold text-zinc-300">
+                  {idioma === 'es' ? 'En espera crítica' : 'Critical Standby'}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         {resultado && (
           <div className="bg-zinc-950/80 border border-orange-500/30 rounded-xl p-5 sm:p-6 mt-4 animate-in fade-in">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5 text-center sm:text-left">
