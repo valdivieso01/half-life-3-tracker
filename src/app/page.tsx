@@ -329,35 +329,38 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {ARTICULOS_EDITORIALES.map((art) => (
-                <Link
-                  key={art.slug}
-                  href={`/noticias/${art.slug}`}
-                  className="bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group shadow-lg"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 text-xs mb-2">
-                      <span className="bg-orange-500/10 border border-orange-500/30 text-orange-400 font-semibold px-2.5 py-0.5 rounded-full text-[11px]">
-                        {art.categoria}
-                      </span>
-                      <span className="text-zinc-500 text-[11px]">{art.tiempoLectura}</span>
+              {ARTICULOS_EDITORIALES.map((art) => {
+                const info = art[idioma];
+                return (
+                  <Link
+                    key={art.slug}
+                    href={`/noticias/${art.slug}`}
+                    className="bg-zinc-900/70 hover:bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 rounded-2xl p-5 flex flex-col justify-between transition-all group shadow-lg"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 text-xs mb-2">
+                        <span className="bg-orange-500/10 border border-orange-500/30 text-orange-400 font-semibold px-2.5 py-0.5 rounded-full text-[11px]">
+                          {info.categoria}
+                        </span>
+                        <span className="text-zinc-500 text-[11px]">{info.tiempoLectura}</span>
+                      </div>
+
+                      <h3 className="text-base font-bold text-zinc-100 group-hover:text-orange-400 transition-colors mb-2 leading-snug">
+                        {info.titulo}
+                      </h3>
+
+                      <p className="text-xs text-zinc-400 leading-relaxed mb-4 line-clamp-3">
+                        {info.resumen}
+                      </p>
                     </div>
 
-                    <h3 className="text-base font-bold text-zinc-100 group-hover:text-orange-400 transition-colors mb-2 leading-snug">
-                      {art.titulo}
-                    </h3>
-
-                    <p className="text-xs text-zinc-400 leading-relaxed mb-4 line-clamp-3">
-                      {art.resumen}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-semibold text-orange-400">
-                    <span>{idioma === 'es' ? 'Leer artículo completo →' : 'Read full article →'}</span>
-                    <span className="text-zinc-500 text-[11px]">{art.fecha}</span>
-                  </div>
-                </Link>
-              ))}
+                    <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-semibold text-orange-400">
+                      <span>{idioma === 'es' ? 'Leer artículo completo →' : 'Read full article →'}</span>
+                      <span className="text-zinc-500 text-[11px]">{art.fecha}</span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
