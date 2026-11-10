@@ -7,14 +7,16 @@ interface ArcadeHalfLifeProps {
   idioma?: Idioma;
 }
 
-interface Headcrab {
+type TipoArma = 'palanca' | 'pistola' | 'escopeta';
+
+interface EnemigoOItem {
   id: number;
   x: number;
   y: number;
   vx: number;
   vy: number;
   radius: number;
-  tipo: 'normal' | 'fast' | 'poison' | 'medkit';
+  tipo: 'normal' | 'fast' | 'poison' | 'medkit' | 'caja' | 'municion';
   vida: number;
   maxVida: number;
   rotacion: number;
@@ -34,9 +36,11 @@ interface Particula {
 
 export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   const esIngles = idioma === 'en';
-  const [modo, setModo] = useState<'2d' | '3d'>('2d');
 
-  // Estados del juego 2D
+  // Pestaña activa: 'arcade' (el juego) o 'info' (explicación de emulación)
+  const [pestana, setPestana] = useState<'arcade' | 'info'>('arcade');
+
+  // Estados del juego
   const [jugando, setJugando] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [puntos, setPuntos] = useState(0);
@@ -46,15 +50,16 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   const [audioHabilitado, setAudioHabilitado] = useState(true);
   const [enPantallaCompleta, setEnPantallaCompleta] = useState(false);
 
-  // Modo 3D
-  const [cargando3D, setCargando3D] = useState(false);
-  const [juego3DIniciado, setJuego3DIniciado] = useState(false);
+  // Armas y Munición
+  const [armaActual, setArmaActual] = useState<TipoArma>('palanca');
+  const [balasPistola, setBalasPistola] = useState(24);
+  const [balasEscopeta, setBalasEscopeta] = useState(8);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contenedorRef = useRef<HTMLDivElement | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
 
-  // Refs de estado en el bucle del juego
+  // Refs para el bucle del juego (60 FPS)
   const estadoRef = useRef({
     jugando: false,
     gameOver: false,
@@ -62,16 +67,20 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     salud: 100,
     combo: 0,
     ultimoGolpeCombo: 0,
-    mousePos: { x: 300, y: 300 },
+    armaActual: 'palanca' as TipoArma,
+    balasPistola: 24,
+    balasEscopeta: 8,
+    mousePos: { x: 400, y: 250 },
     swingTimer: 0,
-    headcrabs: [] as Headcrab[],
+    disparoTimer: 0,
+    enemigos: [] as EnemigoOItem[],
     particulas: [] as Particula[],
     ultimoSpawn: 0,
     idContador: 1,
     audioHabilitado: true,
   });
 
-  // Cargar récord guardado de localStorage
+  // Cargar récord de localStorage
   useEffect(() => {
     try {
       const guardado = localStorage.getItem('hl3_arcade_record');
@@ -79,11 +88,11 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         setRecord(Number(guardado) || 0);
       }
     } catch {
-      // Ignorar restricciones de cookies o modo incógnito
+      // Ignorar restricciones locales
     }
   }, []);
 
-  // Inicializar o reanudar AudioContext
+  // Inicializar Web Audio API
   const obtenerAudioContext = useCallback(() => {
     if (!audioHabilitado) return null;
     try {
@@ -104,71 +113,118 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     }
   }, [audioHabilitado]);
 
-  // Sonidos sintetizados clásicos de Half-Life usando Web Audio API
+  // Sintetizador de audio retro para efectos clásicos de Half-Life
   const reproducirSonido = useCallback(
-    (tipo: 'palanca' | 'impacto' | 'salto' | 'medkit' | 'dano' | 'flatline') => {
+    (tipo: 'palanca' | 'pistola' | 'escopeta' | 'sin_balas' | 'impacto' | 'salto' | 'medkit' | 'caja' | 'dano' | 'flatline') => {
       const ctx = obtenerAudioContext();
       if (!ctx) return;
-
       const ahora = ctx.currentTime;
 
       if (tipo === 'palanca') {
-        // Swing de la palanca: ráfaga sibilante rápida
+        // Swing metálico rápido
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(320, ahora);
-        osc.frequency.exponentialRampToValueAtTime(140, ahora + 0.12);
-        gain.gain.setValueAtTime(0.18, ahora);
+        osc.frequency.exponentialRampToValueAtTime(120, ahora + 0.12);
+        gain.gain.setValueAtTime(0.2, ahora);
         gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.12);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(ahora);
         osc.stop(ahora + 0.13);
-      } else if (tipo === 'impacto') {
-        // Clang metálico y crunch alienígena
+      } else if (tipo === 'pistola') {
+        // Disparo de 9mm Glock (Half-Life 1)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(700, ahora);
+        osc.frequency.exponentialRampToValueAtTime(80, ahora + 0.14);
+        gain.gain.setValueAtTime(0.35, ahora);
+        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.14);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ahora);
+        osc.stop(ahora + 0.15);
+      } else if (tipo === 'escopeta') {
+        // Disparo SPAS-12 pesado y explosivo
         const osc = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(650, ahora);
-        osc.frequency.exponentialRampToValueAtTime(80, ahora + 0.16);
-
-        osc2.type = 'sine';
-        osc2.frequency.setValueAtTime(1200, ahora);
-        osc2.frequency.exponentialRampToValueAtTime(300, ahora + 0.18);
-
-        gain.gain.setValueAtTime(0.3, ahora);
-        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.2);
-
+        osc.frequency.setValueAtTime(350, ahora);
+        osc.frequency.exponentialRampToValueAtTime(40, ahora + 0.28);
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(140, ahora);
+        osc2.frequency.exponentialRampToValueAtTime(30, ahora + 0.25);
+        gain.gain.setValueAtTime(0.5, ahora);
+        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.3);
         osc.connect(gain);
         osc2.connect(gain);
         gain.connect(ctx.destination);
         osc.start(ahora);
         osc2.start(ahora);
-        osc.stop(ahora + 0.2);
-        osc2.stop(ahora + 0.2);
+        osc.stop(ahora + 0.3);
+        osc2.stop(ahora + 0.3);
+      } else if (tipo === 'sin_balas') {
+        // Clic de percutor vacío
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(1400, ahora);
+        gain.gain.setValueAtTime(0.12, ahora);
+        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ahora);
+        osc.stop(ahora + 0.05);
+      } else if (tipo === 'impacto') {
+        // Clang metálico y crunch alienígena
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(650, ahora);
+        osc.frequency.exponentialRampToValueAtTime(90, ahora + 0.16);
+        gain.gain.setValueAtTime(0.3, ahora);
+        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.18);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ahora);
+        osc.stop(ahora + 0.19);
+      } else if (tipo === 'caja') {
+        // Ruido sordo de madera quebrándose
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(240, ahora);
+        osc.frequency.exponentialRampToValueAtTime(60, ahora + 0.15);
+        gain.gain.setValueAtTime(0.3, ahora);
+        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ahora);
+        osc.stop(ahora + 0.16);
       } else if (tipo === 'salto') {
-        // Chillido agudo de headcrab saltando
+        // Chillido característico de headcrab saltando
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(1800, ahora);
-        osc.frequency.linearRampToValueAtTime(2400, ahora + 0.08);
-        osc.frequency.linearRampToValueAtTime(1200, ahora + 0.18);
-        gain.gain.setValueAtTime(0.08, ahora);
+        osc.frequency.setValueAtTime(1900, ahora);
+        osc.frequency.linearRampToValueAtTime(2500, ahora + 0.08);
+        osc.frequency.linearRampToValueAtTime(1100, ahora + 0.18);
+        gain.gain.setValueAtTime(0.07, ahora);
         gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.18);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(ahora);
         osc.stop(ahora + 0.19);
       } else if (tipo === 'medkit') {
-        // Doble beep alegre de recarga HEV
+        // Tono ascendente de recarga de salud HEV
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(520, ahora);
-        osc.frequency.setValueAtTime(1040, ahora + 0.08);
+        osc.frequency.setValueAtTime(1040, ahora + 0.09);
         gain.gain.setValueAtTime(0.2, ahora);
         gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.22);
         osc.connect(gain);
@@ -176,12 +232,12 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.23);
       } else if (tipo === 'dano') {
-        // Alerta de golpe al traje HEV
+        // Alerta de daño del traje
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';
         osc.frequency.setValueAtTime(180, ahora);
-        osc.frequency.exponentialRampToValueAtTime(60, ahora + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(60, ahora + 0.14);
         gain.gain.setValueAtTime(0.25, ahora);
         gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.15);
         osc.connect(gain);
@@ -189,13 +245,13 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.16);
       } else if (tipo === 'flatline') {
-        // Tono continuo clásico de muerte del traje HEV
+        // Pitido largo continuo de muerte de Gordon Freeman
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(800, ahora);
-        gain.gain.setValueAtTime(0.25, ahora);
-        gain.gain.setValueAtTime(0.25, ahora + 1.2);
+        gain.gain.setValueAtTime(0.28, ahora);
+        gain.gain.setValueAtTime(0.28, ahora + 1.2);
         gain.gain.exponentialRampToValueAtTime(0.01, ahora + 1.5);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -206,7 +262,14 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     [obtenerAudioContext]
   );
 
-  // Iniciar partida 2D
+  // Cambiar arma activa
+  function cambiarArma(nueva: TipoArma) {
+    estadoRef.current.armaActual = nueva;
+    setArmaActual(nueva);
+    reproducirSonido('palanca');
+  }
+
+  // Iniciar partida
   function iniciarPartida() {
     obtenerAudioContext();
     estadoRef.current = {
@@ -216,9 +279,13 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       salud: 100,
       combo: 0,
       ultimoGolpeCombo: Date.now(),
-      mousePos: { x: 300, y: 300 },
+      armaActual: 'palanca',
+      balasPistola: 24,
+      balasEscopeta: 8,
+      mousePos: { x: 400, y: 250 },
       swingTimer: 0,
-      headcrabs: [],
+      disparoTimer: 0,
+      enemigos: [],
       particulas: [],
       ultimoSpawn: Date.now(),
       idContador: 1,
@@ -227,11 +294,14 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     setPuntos(0);
     setSalud(100);
     setCombo(0);
+    setArmaActual('palanca');
+    setBalasPistola(24);
+    setBalasEscopeta(8);
     setGameOver(false);
     setJugando(true);
   }
 
-  // Generar partículas al golpear
+  // Explosión de partículas
   function crearExplosion(x: number, y: number, color: string, cantidad = 12) {
     for (let i = 0; i < cantidad; i++) {
       const angulo = Math.random() * Math.PI * 2;
@@ -249,88 +319,193 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     }
   }
 
-  // Golpe de la palanca (clic o espacio)
-  const ejecutarGolpe = useCallback(() => {
-    if (!estadoRef.current.jugando || estadoRef.current.gameOver) return;
-
+  // Disparo o golpe
+  const dispararOAtacar = useCallback(() => {
     const ref = estadoRef.current;
-    ref.swingTimer = 10;
-    reproducirSonido('palanca');
+    if (!ref.jugando || ref.gameOver) return;
 
     const mx = ref.mousePos.x;
     const my = ref.mousePos.y;
-    const radioAlcance = 60;
 
-    let impactoExitoso = false;
+    if (ref.armaActual === 'palanca') {
+      ref.swingTimer = 10;
+      reproducirSonido('palanca');
+      const radioAlcance = 65;
+      let impacto = false;
 
-    // Verificar colisión con headcrabs
-    for (let i = ref.headcrabs.length - 1; i >= 0; i--) {
-      const hc = ref.headcrabs[i];
-      const dist = Math.hypot(hc.x - mx, hc.y - my);
+      for (let i = ref.enemigos.length - 1; i >= 0; i--) {
+        const item = ref.enemigos[i];
+        const dist = Math.hypot(item.x - mx, item.y - my);
 
-      if (dist <= radioAlcance + hc.radius) {
-        impactoExitoso = true;
-        hc.vida -= 1;
+        if (dist <= radioAlcance + item.radius) {
+          impacto = true;
+          item.vida -= 1;
 
-        if (hc.tipo === 'medkit') {
-          // Curación
-          ref.salud = Math.min(100, ref.salud + 30);
-          setSalud(ref.salud);
-          reproducirSonido('medkit');
-          crearExplosion(hc.x, hc.y, '#10b981', 14);
-          ref.headcrabs.splice(i, 1);
-          continue;
-        }
-
-        if (hc.vida <= 0) {
-          // Destruido
-          reproducirSonido('impacto');
-          const sangreColor = hc.tipo === 'poison' ? '#a855f7' : '#f97316';
-          crearExplosion(hc.x, hc.y, sangreColor, 18);
-
-          // Puntos y combos
-          const ahora = Date.now();
-          if (ahora - ref.ultimoGolpeCombo < 1800) {
-            ref.combo += 1;
-          } else {
-            ref.combo = 1;
-          }
-          ref.ultimoGolpeCombo = ahora;
-
-          const puntosSumar =
-            (hc.tipo === 'fast' ? 250 : hc.tipo === 'poison' ? 350 : 100) *
-            Math.min(ref.combo, 5);
-
-          ref.puntos += puntosSumar;
-          setPuntos(ref.puntos);
-          setCombo(ref.combo);
-
-          if (ref.puntos > record) {
-            setRecord(ref.puntos);
-            try {
-              localStorage.setItem('hl3_arcade_record', String(ref.puntos));
-            } catch {
-              // Ignorar
+          if (item.tipo === 'caja') {
+            reproducirSonido('caja');
+            crearExplosion(item.x, item.y, '#d97706', 15);
+            // La caja suelta munición o vida
+            if (Math.random() > 0.5) {
+              ref.enemigos.push({
+                id: ref.idContador++,
+                x: item.x,
+                y: item.y,
+                vx: 0,
+                vy: 1.5,
+                radius: 14,
+                tipo: 'medkit',
+                vida: 1,
+                maxVida: 1,
+                rotacion: 0,
+                rotSpeed: 0,
+              });
+            } else {
+              ref.enemigos.push({
+                id: ref.idContador++,
+                x: item.x,
+                y: item.y,
+                vx: 0,
+                vy: 1.5,
+                radius: 14,
+                tipo: 'municion',
+                vida: 1,
+                maxVida: 1,
+                rotacion: 0,
+                rotSpeed: 0,
+              });
             }
+            ref.enemigos.splice(i, 1);
+            continue;
           }
 
-          ref.headcrabs.splice(i, 1);
-        } else {
-          // Golpeado pero sigue vivo
-          reproducirSonido('impacto');
-          crearExplosion(hc.x, hc.y, '#eab308', 6);
-          hc.vy = -4;
+          if (item.tipo === 'medkit') {
+            ref.salud = Math.min(100, ref.salud + 30);
+            setSalud(ref.salud);
+            reproducirSonido('medkit');
+            crearExplosion(item.x, item.y, '#10b981', 14);
+            ref.enemigos.splice(i, 1);
+            continue;
+          }
+
+          if (item.tipo === 'municion') {
+            ref.balasPistola += 18;
+            ref.balasEscopeta += 6;
+            setBalasPistola(ref.balasPistola);
+            setBalasEscopeta(ref.balasEscopeta);
+            reproducirSonido('medkit');
+            crearExplosion(item.x, item.y, '#f59e0b', 14);
+            ref.enemigos.splice(i, 1);
+            continue;
+          }
+
+          if (item.vida <= 0) {
+            reproducirSonido('impacto');
+            const sangre = item.tipo === 'poison' ? '#a855f7' : '#f97316';
+            crearExplosion(item.x, item.y, sangre, 18);
+
+            const ahora = Date.now();
+            if (ahora - ref.ultimoGolpeCombo < 1800) {
+              ref.combo += 1;
+            } else {
+              ref.combo = 1;
+            }
+            ref.ultimoGolpeCombo = ahora;
+
+            const puntosGanados =
+              (item.tipo === 'fast' ? 250 : item.tipo === 'poison' ? 350 : 100) *
+              Math.min(ref.combo, 5);
+
+            ref.puntos += puntosGanados;
+            setPuntos(ref.puntos);
+            setCombo(ref.combo);
+
+            if (ref.puntos > record) {
+              setRecord(ref.puntos);
+              try {
+                localStorage.setItem('hl3_arcade_record', String(ref.puntos));
+              } catch {
+                // Ignorar
+              }
+            }
+
+            ref.enemigos.splice(i, 1);
+          } else {
+            reproducirSonido('impacto');
+            crearExplosion(item.x, item.y, '#eab308', 6);
+            item.vy = -3;
+          }
+        }
+      }
+
+      if (!impacto) {
+        ref.combo = 0;
+        setCombo(0);
+      }
+    } else if (ref.armaActual === 'pistola') {
+      if (ref.balasPistola <= 0) {
+        reproducirSonido('sin_balas');
+        return;
+      }
+      ref.balasPistola -= 1;
+      setBalasPistola(ref.balasPistola);
+      ref.disparoTimer = 8;
+      reproducirSonido('pistola');
+      crearExplosion(mx, my, '#fbbf24', 6);
+
+      // Impacto en el punto de mira
+      for (let i = ref.enemigos.length - 1; i >= 0; i--) {
+        const item = ref.enemigos[i];
+        const dist = Math.hypot(item.x - mx, item.y - my);
+
+        if (dist <= item.radius + 15) {
+          item.vida -= 1;
+          if (item.vida <= 0) {
+            reproducirSonido('impacto');
+            crearExplosion(item.x, item.y, '#f97316', 16);
+            ref.puntos += 150;
+            setPuntos(ref.puntos);
+            ref.enemigos.splice(i, 1);
+          } else {
+            reproducirSonido('impacto');
+            item.vy = -3;
+          }
+          break;
+        }
+      }
+    } else if (ref.armaActual === 'escopeta') {
+      if (ref.balasEscopeta <= 0) {
+        reproducirSonido('sin_balas');
+        return;
+      }
+      ref.balasEscopeta -= 1;
+      setBalasEscopeta(ref.balasEscopeta);
+      ref.disparoTimer = 14;
+      reproducirSonido('escopeta');
+      crearExplosion(mx, my, '#f97316', 20);
+
+      // Disparo en abanico (destruye múltiples enemigos en el área)
+      const radioEscopeta = 110;
+      for (let i = ref.enemigos.length - 1; i >= 0; i--) {
+        const item = ref.enemigos[i];
+        const dist = Math.hypot(item.x - mx, item.y - my);
+
+        if (dist <= radioEscopeta) {
+          item.vida -= 2;
+          if (item.vida <= 0) {
+            reproducirSonido('impacto');
+            crearExplosion(item.x, item.y, '#ef4444', 20);
+            ref.puntos += 250;
+            setPuntos(ref.puntos);
+            ref.enemigos.splice(i, 1);
+          } else {
+            item.vy = -5;
+          }
         }
       }
     }
-
-    if (!impactoExitoso) {
-      ref.combo = 0;
-      setCombo(0);
-    }
   }, [reproducirSonido, record]);
 
-  // Manejo de eventos de entrada
+  // Manejo de eventos de mouse y teclado
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -357,17 +532,23 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         x: (e.touches[0].clientX - rect.left) * scaleX,
         y: (e.touches[0].clientY - rect.top) * scaleY,
       };
-      ejecutarGolpe();
+      dispararOAtacar();
     }
 
     function alHacerClick() {
-      ejecutarGolpe();
+      dispararOAtacar();
     }
 
     function alPresionarTecla(e: KeyboardEvent) {
       if (e.code === 'Space') {
         e.preventDefault();
-        ejecutarGolpe();
+        dispararOAtacar();
+      } else if (e.key === '1') {
+        cambiarArma('palanca');
+      } else if (e.key === '2') {
+        cambiarArma('pistola');
+      } else if (e.key === '3') {
+        cambiarArma('escopeta');
       }
     }
 
@@ -382,9 +563,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       canvas.removeEventListener('touchstart', actualizarTouch);
       window.removeEventListener('keydown', alPresionarTecla);
     };
-  }, [ejecutarGolpe]);
+  }, [dispararOAtacar]);
 
-  // Bucle principal de animación (Game Loop)
+  // Bucle de animación (Game Loop)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -399,12 +580,12 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       const w = canvas.width || 800;
       const h = canvas.height || 500;
 
-      // Limpiar fondo estilo conductos de ventilación de Black Mesa
-      ctx.fillStyle = '#090a0f';
+      // Fondo metálico oscuro de Black Mesa
+      ctx.fillStyle = '#080a0f';
       ctx.fillRect(0, 0, w, h);
 
-      // Dibujar cuadrícula de ductos metálicos
-      ctx.strokeStyle = '#181b26';
+      // Rejilla de paneles de ventilación
+      ctx.strokeStyle = '#151922';
       ctx.lineWidth = 1;
       for (let x = 0; x < w; x += 40) {
         ctx.beginPath();
@@ -419,42 +600,42 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         ctx.stroke();
       }
 
-      // Detalle de rejas y remaches industriales
-      ctx.fillStyle = '#1e2330';
+      // Viga superior con remaches y rótulo
+      ctx.fillStyle = '#1c2230';
       ctx.fillRect(0, 0, w, 24);
       ctx.fillStyle = '#ea580c';
       ctx.font = 'bold 10px monospace';
-      ctx.fillText('SECTOR C // ANOMALOUS MATERIALS // VENT SHAFT #03', 14, 16);
+      ctx.fillText('BLACK MESA RESEARCH FACILITY // SECTOR C // ANOMALOUS MATERIALS', 14, 16);
 
       if (ref.jugando && !ref.gameOver) {
-        // Spawnear enemigos periódicamente
         const ahora = Date.now();
-        const intervaloSpawn = Math.max(700, 2200 - Math.floor(ref.puntos / 300) * 120);
+        const intervaloSpawn = Math.max(650, 2000 - Math.floor(ref.puntos / 300) * 110);
 
         if (ahora - ref.ultimoSpawn > intervaloSpawn) {
           ref.ultimoSpawn = ahora;
           const azar = Math.random();
-          let tipo: Headcrab['tipo'] = 'normal';
+          let tipo: EnemigoOItem['tipo'] = 'normal';
           let maxVida = 1;
 
-          if (azar > 0.9) {
-            tipo = 'medkit'; // Botiquín curativo
-          } else if (azar > 0.75) {
-            tipo = 'poison'; // Headcrab venenoso resistente
+          if (azar > 0.88) {
+            tipo = 'caja'; // Caja de madera con suministros
+            maxVida = 1;
+          } else if (azar > 0.72) {
+            tipo = 'poison'; // Headcrab venenoso
             maxVida = 2;
-          } else if (azar > 0.5) {
+          } else if (azar > 0.45) {
             tipo = 'fast'; // Headcrab rápido
           }
 
-          const radio = tipo === 'medkit' ? 14 : tipo === 'poison' ? 22 : 18;
-          const spawnX = Math.random() * (w - 100) + 50;
+          const radio = tipo === 'caja' ? 20 : tipo === 'poison' ? 22 : 18;
+          const spawnX = Math.random() * (w - 120) + 60;
 
-          ref.headcrabs.push({
+          ref.enemigos.push({
             id: ref.idContador++,
             x: spawnX,
             y: 30,
-            vx: (Math.random() - 0.5) * (tipo === 'fast' ? 4 : 2.5),
-            vy: tipo === 'fast' ? 3.5 : 2.2,
+            vx: (Math.random() - 0.5) * (tipo === 'fast' ? 4.2 : 2.2),
+            vy: tipo === 'fast' ? 3.6 : 2.2,
             radius: radio,
             tipo,
             vida: maxVida,
@@ -463,30 +644,49 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             rotSpeed: (Math.random() - 0.5) * 0.08,
           });
 
-          if (tipo !== 'medkit') {
+          if (tipo !== 'caja') {
             reproducirSonido('salto');
           }
         }
 
-        // Actualizar y dibujar Headcrabs
-        for (let i = ref.headcrabs.length - 1; i >= 0; i--) {
-          const hc = ref.headcrabs[i];
-          hc.x += hc.vx;
-          hc.y += hc.vy;
-          hc.rotacion += hc.rotSpeed;
+        // Dibujar y actualizar enemigos y cajas
+        for (let i = ref.enemigos.length - 1; i >= 0; i--) {
+          const item = ref.enemigos[i];
+          item.x += item.vx;
+          item.y += item.vy;
+          item.rotacion += item.rotSpeed;
 
-          // Rebote en paredes laterales
-          if (hc.x - hc.radius < 0 || hc.x + hc.radius > w) {
-            hc.vx *= -1;
+          // Rebote en paredes
+          if (item.x - item.radius < 0 || item.x + item.radius > w) {
+            item.vx *= -1;
           }
 
-          // Dibujar enemigo / ítem
           ctx.save();
-          ctx.translate(hc.x, hc.y);
-          ctx.rotate(hc.rotacion);
+          ctx.translate(item.x, item.y);
+          ctx.rotate(item.rotacion);
 
-          if (hc.tipo === 'medkit') {
-            // Botiquín HEV de primeros auxilios
+          if (item.tipo === 'caja') {
+            // Caja de madera de suministros de Black Mesa
+            ctx.fillStyle = '#78350f';
+            ctx.strokeStyle = '#b45309';
+            ctx.lineWidth = 2;
+            ctx.fillRect(-18, -18, 36, 36);
+            ctx.strokeRect(-18, -18, 36, 36);
+
+            // Cruz en la caja
+            ctx.beginPath();
+            ctx.moveTo(-18, -18);
+            ctx.lineTo(18, 18);
+            ctx.moveTo(18, -18);
+            ctx.lineTo(-18, 18);
+            ctx.stroke();
+
+            // Sello lambda
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 12px monospace';
+            ctx.fillText('λ', -4, 4);
+          } else if (item.tipo === 'medkit') {
+            // Botiquín HEV
             ctx.fillStyle = '#064e3b';
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 2;
@@ -494,41 +694,50 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.roundRect(-14, -14, 28, 28, 6);
             ctx.fill();
             ctx.stroke();
-
-            // Cruz verde / blanca
             ctx.fillStyle = '#34d399';
             ctx.fillRect(-3, -9, 6, 18);
             ctx.fillRect(-9, -3, 18, 6);
+          } else if (item.tipo === 'municion') {
+            // Caja de munición dorada
+            ctx.fillStyle = '#713f12';
+            ctx.strokeStyle = '#eab308';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-14, -12, 28, 24, 4);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#fde047';
+            ctx.font = 'bold 9px monospace';
+            ctx.fillText('AMMO', -12, 4);
           } else {
-            // Cuerpo del Headcrab
+            // Headcrab
             const colorCuerpo =
-              hc.tipo === 'poison' ? '#581c87' : hc.tipo === 'fast' ? '#c2410c' : '#b45309';
+              item.tipo === 'poison' ? '#581c87' : item.tipo === 'fast' ? '#c2410c' : '#b45309';
             const colorPiel =
-              hc.tipo === 'poison' ? '#9333ea' : hc.tipo === 'fast' ? '#ea580c' : '#d97706';
+              item.tipo === 'poison' ? '#9333ea' : item.tipo === 'fast' ? '#ea580c' : '#d97706';
 
             ctx.fillStyle = colorCuerpo;
             ctx.beginPath();
-            ctx.ellipse(0, 0, hc.radius, hc.radius * 0.8, 0, 0, Math.PI * 2);
+            ctx.ellipse(0, 0, item.radius, item.radius * 0.8, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Caparazón exterior
             ctx.fillStyle = colorPiel;
             ctx.beginPath();
-            ctx.arc(0, -2, hc.radius * 0.7, Math.PI, 0);
+            ctx.arc(0, -2, item.radius * 0.7, Math.PI, 0);
             ctx.fill();
 
-            // Patas delanteras articuladas
+            // Patas
             ctx.strokeStyle = colorPiel;
             ctx.lineWidth = 3;
             ctx.beginPath();
-            ctx.moveTo(-hc.radius * 0.6, 0);
-            ctx.lineTo(-hc.radius * 1.3, hc.radius * 0.9);
-            ctx.moveTo(hc.radius * 0.6, 0);
-            ctx.lineTo(hc.radius * 1.3, hc.radius * 0.9);
+            ctx.moveTo(-item.radius * 0.6, 0);
+            ctx.lineTo(-item.radius * 1.3, item.radius * 0.9);
+            ctx.moveTo(item.radius * 0.6, 0);
+            ctx.lineTo(item.radius * 1.3, item.radius * 0.9);
             ctx.stroke();
 
-            // Ojos / fauces carnosas inferiores
-            ctx.fillStyle = '#dc2626';
+            // Ojos
+            ctx.fillStyle = '#ef4444';
             ctx.beginPath();
             ctx.arc(-4, 3, 2, 0, Math.PI * 2);
             ctx.arc(4, 3, 2, 0, Math.PI * 2);
@@ -537,13 +746,13 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
           ctx.restore();
 
-          // Si el headcrab llega al fondo (alcanza a Gordon)
-          if (hc.y + hc.radius >= h - 20) {
-            if (hc.tipo !== 'medkit') {
-              ref.salud = Math.max(0, ref.salud - (hc.tipo === 'poison' ? 30 : 20));
+          // Si el enemigo toca el fondo (alcanza a Gordon)
+          if (item.y + item.radius >= h - 20) {
+            if (item.tipo !== 'medkit' && item.tipo !== 'caja' && item.tipo !== 'municion') {
+              ref.salud = Math.max(0, ref.salud - (item.tipo === 'poison' ? 30 : 20));
               setSalud(ref.salud);
               reproducirSonido('dano');
-              crearExplosion(hc.x, h - 30, '#ef4444', 16);
+              crearExplosion(item.x, h - 30, '#ef4444', 16);
 
               if (ref.salud <= 0) {
                 ref.gameOver = true;
@@ -552,17 +761,17 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
                 reproducirSonido('flatline');
               }
             }
-            ref.headcrabs.splice(i, 1);
+            ref.enemigos.splice(i, 1);
           }
         }
 
-        // Actualizar y dibujar partículas
+        // Partículas
         for (let i = ref.particulas.length - 1; i >= 0; i--) {
           const p = ref.particulas[i];
           p.x += p.vx;
           p.y += p.vy;
           p.vida += 1;
-          p.vy += 0.15; // Gravedad
+          p.vy += 0.15;
 
           const alpha = Math.max(0, 1 - p.vida / p.maxVida);
           ctx.fillStyle = p.color;
@@ -577,38 +786,53 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           }
         }
 
-        // Dibujar mira / Palanca de Gordon Freeman
+        // Dibujar Arma / Mira en la posición del ratón
         const mx = ref.mousePos.x;
         const my = ref.mousePos.y;
 
-        if (ref.swingTimer > 0) {
-          ref.swingTimer -= 1;
-        }
+        if (ref.swingTimer > 0) ref.swingTimer -= 1;
+        if (ref.disparoTimer > 0) ref.disparoTimer -= 1;
 
         ctx.save();
         ctx.translate(mx, my);
 
-        // Efecto de barrido (swing) de la palanca
-        const anguloPalanca = ref.swingTimer > 0 ? -0.7 : -0.2;
-        ctx.rotate(anguloPalanca);
+        if (ref.armaActual === 'palanca') {
+          // Palanca clásica roja
+          const angulo = ref.swingTimer > 0 ? -0.7 : -0.2;
+          ctx.rotate(angulo);
+          ctx.strokeStyle = '#dc2626';
+          ctx.lineWidth = 6;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-15, 25);
+          ctx.lineTo(15, -20);
+          ctx.stroke();
 
-        // Mango de la palanca (rojo)
-        ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 6;
-        ctx.lineCap = 'round';
-        ctx.beginPath();
-        ctx.moveTo(-15, 25);
-        ctx.lineTo(15, -20);
-        ctx.stroke();
-
-        // Gancho metálico doblado (plateado)
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 5;
-        ctx.beginPath();
-        ctx.moveTo(15, -20);
-        ctx.lineTo(24, -32);
-        ctx.lineTo(16, -38);
-        ctx.stroke();
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(15, -20);
+          ctx.lineTo(24, -32);
+          ctx.lineTo(16, -38);
+          ctx.stroke();
+        } else if (ref.armaActual === 'pistola') {
+          // Pistola 9mm con retroceso
+          const retroceso = ref.disparoTimer > 0 ? -4 : 0;
+          ctx.translate(0, retroceso);
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(-6, -14, 12, 28);
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(-4, -22, 8, 12);
+        } else if (ref.armaActual === 'escopeta') {
+          // Cañón doble de escopeta
+          const retroceso = ref.disparoTimer > 0 ? -7 : 0;
+          ctx.translate(0, retroceso);
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(-8, -26, 7, 34);
+          ctx.fillRect(1, -26, 7, 34);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(-9, 8, 18, 12);
+        }
 
         // Mira HUD estilo Half-Life
         ctx.strokeStyle = '#f97316';
@@ -635,7 +859,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     }
 
     animId = requestAnimationFrame(bucle);
-
     return () => cancelAnimationFrame(animId);
   }, [reproducirSonido]);
 
@@ -653,53 +876,53 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
   return (
     <div className="w-full max-w-5xl mx-auto text-left space-y-6">
-      {/* Cabecera de la sección */}
+      {/* Cabecera */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800 pb-4 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-zinc-100 flex items-center gap-2">
             <span>🕹️</span>
-            <span>{esIngles ? 'Sector E: Half-Life Browser Lab' : 'Sector E: Sala de Juegos de Half-Life'}</span>
+            <span>{esIngles ? 'Sector E: Half-Life Web Arcade' : 'Sector E: Arcade Web de Half-Life'}</span>
           </h2>
           <p className="text-xs text-zinc-400 mt-1">
             {esIngles
-              ? 'Playable experiences straight inside your web browser while we wait for Half-Life 3'
-              : 'Experiencias jugables directamente en tu navegador mientras esperamos Half-Life 3'}
+              ? 'Playable in-browser experience built with zero external dependencies and retro audio.'
+              : 'Juego nativo de navegador con audio retro, armamento y cero dependencias externas.'}
           </p>
         </div>
 
-        {/* Selector de Modo: 2D Arcade vs 3D Clásico */}
+        {/* Selector de Pestaña: Juego vs Info */}
         <div className="inline-flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
           <button
-            onClick={() => setModo('2d')}
+            onClick={() => setPestana('arcade')}
             className={`text-xs font-semibold px-3.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-              modo === '2d' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+              pestana === 'arcade' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            🔨 {esIngles ? 'Crowbar Strike (2D)' : 'Crowbar Strike (2D)'}
+            🔨 {esIngles ? 'Crowbar Strike (Game)' : 'Crowbar Strike (Juego)'}
           </button>
           <button
-            onClick={() => setModo('3d')}
+            onClick={() => setPestana('info')}
             className={`text-xs font-semibold px-3.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-              modo === '3d' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
+              pestana === 'info' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            🎮 {esIngles ? 'Half-Life 1 3D (WebAssembly)' : 'Half-Life 1 3D (WebAssembly)'}
+            ℹ️ {esIngles ? 'About 3D HL1 in Browser' : 'Sobre HL1 3D en la Web'}
           </button>
         </div>
       </div>
 
-      {/* MODO 1: CROWBAR STRIKE (MINIJUEGO 2D NATIVO) */}
-      {modo === '2d' && (
+      {/* PESTAÑA 1: CROWBAR STRIKE (JUEGO 100% FUNCIONAL Y NATIVO) */}
+      {pestana === 'arcade' && (
         <div
           ref={contenedorRef}
           className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden"
         >
-          {/* Barra superior de HUD: HEV Suit Health + Score + Combo + Sonido */}
+          {/* Barra superior de HUD: HEV Health + Armas + Munición + Récord */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4 border-b border-zinc-800/80 pb-3">
-            {/* Traje HEV: Salud */}
+            {/* Salud del traje HEV */}
             <div className="flex items-center gap-3">
               <span className="text-orange-500 font-mono font-bold text-xs">HEV SUIT</span>
-              <div className="w-36 bg-zinc-900 border border-zinc-700 h-4 rounded-full overflow-hidden p-0.5">
+              <div className="w-32 bg-zinc-900 border border-zinc-700 h-4 rounded-full overflow-hidden p-0.5">
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
                     salud > 50 ? 'bg-emerald-500' : salud > 25 ? 'bg-amber-500' : 'bg-red-500'
@@ -710,8 +933,50 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
               <span className="font-mono text-xs font-bold text-zinc-200">{salud}%</span>
             </div>
 
+            {/* Selector interactivo de armas */}
+            <div className="flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 font-mono text-xs">
+              <button
+                onClick={() => cambiarArma('palanca')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  armaActual === 'palanca'
+                    ? 'bg-orange-600 text-white shadow'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title="[1] Palanca cuerpo a cuerpo (Munición infinita)"
+              >
+                <span>[1] 🔨</span>
+                <span>∞</span>
+              </button>
+
+              <button
+                onClick={() => cambiarArma('pistola')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  armaActual === 'pistola'
+                    ? 'bg-orange-600 text-white shadow'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title="[2] Pistola 9mm Glock"
+              >
+                <span>[2] 🔫</span>
+                <span className={balasPistola === 0 ? 'text-red-400' : ''}>{balasPistola}</span>
+              </button>
+
+              <button
+                onClick={() => cambiarArma('escopeta')}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  armaActual === 'escopeta'
+                    ? 'bg-orange-600 text-white shadow'
+                    : 'text-zinc-400 hover:text-zinc-200'
+                }`}
+                title="[3] Escopeta SPAS-12"
+              >
+                <span>[3] 💥</span>
+                <span className={balasEscopeta === 0 ? 'text-red-400' : ''}>{balasEscopeta}</span>
+              </button>
+            </div>
+
             {/* Puntos y Récord */}
-            <div className="flex items-center gap-6 font-mono text-xs">
+            <div className="flex items-center gap-4 font-mono text-xs">
               <div>
                 <span className="text-zinc-500">{esIngles ? 'SCORE:' : 'PUNTOS:'} </span>
                 <strong className="text-orange-400 text-sm">{puntos.toLocaleString()}</strong>
@@ -727,12 +992,11 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
               )}
             </div>
 
-            {/* Controles de utilería: Mute + Fullscreen */}
+            {/* Utilidades de pantalla y audio */}
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setAudioHabilitado((prev) => !prev)}
                 className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
-                title={audioHabilitado ? 'Silenciar sonido' : 'Activar sonido'}
               >
                 {audioHabilitado ? '🔊 SFX' : '🔇 Mute'}
               </button>
@@ -757,23 +1021,23 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
             {/* Pantalla inicial antes de jugar */}
             {!jugando && !gameOver && (
-              <div className="absolute inset-0 bg-zinc-950/85 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-3xl mb-4 text-orange-400">
+              <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-3xl mb-4 text-orange-400 shadow-lg shadow-orange-500/20">
                   λ
                 </div>
-                <h3 className="text-2xl font-black text-white mb-2 tracking-wide font-mono">
+                <h3 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-wide font-mono">
                   CROWBAR STRIKE // BLACK MESA DEFENSE
                 </h3>
-                <p className="text-zinc-400 text-xs sm:text-sm max-w-md mb-6">
+                <p className="text-zinc-400 text-xs sm:text-sm max-w-lg mb-6">
                   {esIngles
-                    ? 'Headcrabs are breaching Sector C ducts! Move your mouse or touch to aim, and click or press SPACE to swing Gordon Freeman’s crowbar!'
-                    : '¡Los Headcrabs están invadiendo los ductos del Sector C! Mueve el ratón o toca la pantalla para apuntar, y haz clic o presiona ESPACIO para golpear con la palanca.'}
+                    ? 'Sector C has suffered a containment breach! Smash jumping headcrabs, break supply crates with [λ], and switch weapons [1] Crowbar, [2] 9mm Pistol, [3] Shotgun!'
+                    : '¡El Sector C ha sufrido una brecha de contención! Golpea headcrabs, rompe cajas de suministros con [λ], y cambia de arma con [1] Palanca, [2] Pistola 9mm, [3] Escopeta.'}
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono text-zinc-400 mb-6 bg-zinc-900/80 border border-zinc-800 px-4 py-2 rounded-xl">
-                  <span>🖱️ Clic / Tap: {esIngles ? 'Swing Crowbar' : 'Golpear'}</span>
-                  <span>⌨️ Espacio: {esIngles ? 'Strike' : 'Atacar'}</span>
-                  <span>➕ Verde: {esIngles ? '+30 HP Medkit' : '+30 HP Botiquín'}</span>
+                <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-zinc-400 mb-6 bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 rounded-xl">
+                  <span>🖱️ Clic / Tap: {esIngles ? 'Attack / Shoot' : 'Atacar / Disparar'}</span>
+                  <span>⌨️ [1][2][3]: {esIngles ? 'Weapons' : 'Armas'}</span>
+                  <span>📦 Cajas: {esIngles ? 'Ammo & Health' : 'Munición y Salud'}</span>
                 </div>
 
                 <button
@@ -796,8 +1060,8 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
                 </h3>
                 <p className="text-zinc-300 text-xs sm:text-sm max-w-md mb-5">
                   {esIngles
-                    ? 'You succumbed to the headcrab horde. But humanity is still waiting for Episode Three...'
-                    : 'Caíste ante la horda de headcrabs. Pero la humanidad sigue esperando Half-Life 3...'}
+                    ? 'The right man in the wrong place can make all the difference in the world...'
+                    : 'El hombre adecuado en el sitio equivocado puede cambiar el rumbo del mundo...'}
                 </p>
 
                 <div className="bg-zinc-900/90 border border-red-500/30 rounded-xl px-6 py-3 mb-6 font-mono text-center">
@@ -805,7 +1069,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
                   <p className="text-2xl font-bold text-orange-400">{puntos.toLocaleString()}</p>
                   {puntos >= record && puntos > 0 && (
                     <p className="text-emerald-400 text-[11px] font-semibold mt-1">
-                      ⭐ {esIngles ? 'NEW RECORD!' : '¡NUEVO RÉCORD!'} ⭐
+                      ⭐ {esIngles ? 'NEW HIGH SCORE!' : '¡NUEVO RÉCORD!'} ⭐
                     </p>
                   )}
                 </div>
@@ -822,132 +1086,51 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         </div>
       )}
 
-      {/* MODO 2: HALF-LIFE 1 3D EN EL NAVEGADOR (WEBASSEMBLY / WEBGL) */}
-      {modo === '3d' && (
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
-            <div>
-              <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-                <span>☢️</span>
-                <span>{esIngles ? 'Half-Life 1 Classic (WebGL & WebAssembly)' : 'Half-Life 1 Clásico (WebGL y WebAssembly)'}</span>
-              </h3>
-              <p className="text-xs text-zinc-400 mt-1">
-                {esIngles
-                  ? 'Runs the original Half-Life 1 engine directly inside your browser using Emscripten / WebGL.'
-                  : 'Ejecuta el motor GoldSrc original de Half-Life 1 en tu navegador usando WebAssembly y WebGL sin instalar nada.'}
-              </p>
-            </div>
-
-            <span className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono px-3 py-1 rounded-lg">
-              ● WASM Engine Ready
-            </span>
+      {/* PESTAÑA 2: INFORMACIÓN Y CÓMO JUGAR A HALF-LIFE 1 EN 3D */}
+      {pestana === 'info' && (
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-6 text-zinc-300 text-sm">
+          <div className="border-b border-zinc-800 pb-4">
+            <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
+              <span>☢️</span>
+              <span>{esIngles ? 'Why does running 3D Half-Life in the browser require setup?' : '¿Por qué jugar a Half-Life 1 en 3D en la web requiere configuración?'}</span>
+            </h3>
+            <p className="text-xs text-zinc-400 mt-1">
+              {esIngles
+                ? 'An honest explanation of WebAssembly GoldSrc emulation and Valve copyright.'
+                : 'Una explicación honesta sobre la emulación de GoldSrc con WebAssembly y los derechos de autor de Valve.'}
+            </p>
           </div>
 
-          {/* Guía rápida de controles clásicos */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono bg-zinc-950 border border-zinc-800/80 rounded-xl p-4 text-zinc-300">
-            <div>
-              <span className="text-orange-400 block font-bold">W A S D</span>
-              <span className="text-zinc-500">{esIngles ? 'Movement' : 'Moverse'}</span>
-            </div>
-            <div>
-              <span className="text-orange-400 block font-bold">RATÓN / MOUSE</span>
-              <span className="text-zinc-500">{esIngles ? 'Look & Aim' : 'Mirar y Apuntar'}</span>
-            </div>
-            <div>
-              <span className="text-orange-400 block font-bold">CLICK IZQ / LEFT</span>
-              <span className="text-zinc-500">{esIngles ? 'Fire / Crowbar' : 'Disparo / Palanca'}</span>
-            </div>
-            <div>
-              <span className="text-orange-400 block font-bold">SPACE / CTRL / E</span>
-              <span className="text-zinc-500">{esIngles ? 'Jump / Duck / Use' : 'Saltar / Agacharse / Usar'}</span>
-            </div>
-          </div>
+          <div className="space-y-4 text-xs sm:text-sm leading-relaxed text-zinc-300">
+            <p>
+              {esIngles
+                ? 'Open-source engines like Xash3D FWGS allow the Half-Life 1 engine to run on WebAssembly. However, Valve Corporation strictly protects the copyrighted game assets (levels, sounds, 3D models and textures). For this reason, web emulators cannot legally host the original game data on public servers, and any unauthorized hosting is regularly taken down.'
+                : 'Motores de código abierto como Xash3D FWGS permiten compilar el motor GoldSrc en WebAssembly. Sin embargo, Valve Corporation protege estrictamente por derechos de autor los archivos de juego originales (mapas, texturas, modelos y voces). Por este motivo, ningún sitio web puede alojar legalmente los datos del juego completo en servidores públicos, y los enlaces no oficiales son dados de baja con frecuencia.'}
+            </p>
 
-          {/* Contenedor del visor 3D interactivo */}
-          {!juego3DIniciado ? (
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-8 sm:p-12 text-center space-y-4">
-              <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-3xl mx-auto text-orange-400 shadow-lg">
-                🎮
-              </div>
-              <h4 className="text-xl font-bold text-zinc-100">
-                {esIngles ? 'Launch Half-Life: Uplink / Hazard Course' : 'Cargar Half-Life: Uplink / Sala de Entrenamiento'}
+            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-2">
+              <h4 className="text-orange-400 font-bold text-xs uppercase tracking-wider">
+                {esIngles ? 'How to play the classic games today:' : 'Cómo jugar a los clásicos hoy en día:'}
               </h4>
-              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl mx-auto">
-                {esIngles
-                  ? 'Clicking Launch will load the WebAssembly GoldSrc client inside the viewport. Audio and pointer lock will activate automatically.'
-                  : 'Al hacer clic en Iniciar, se cargará el cliente WebAssembly de GoldSrc en el visor. El audio y el bloqueo de puntero del ratón se activarán para jugar como en el juego original.'}
-              </p>
-
-              <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
-                <a
-                  href="https://x8bitrain.github.io/webXash/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-6 py-3.5 rounded-xl shadow-lg shadow-orange-600/30 cursor-pointer transition-all hover:scale-105 inline-flex items-center gap-2"
-                >
-                  <span>🚀</span>
-                  <span>{esIngles ? 'Play Half-Life 1 (Full Screen)' : 'Jugar Half-Life 1 (Pantalla Completa)'}</span>
-                </a>
-
-                <button
-                  onClick={() => {
-                    setCargando3D(true);
-                    setJuego3DIniciado(true);
-                  }}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold px-4 py-3.5 rounded-xl transition-colors inline-flex items-center gap-2 cursor-pointer"
-                >
-                  <span>📺</span>
-                  <span>{esIngles ? 'Load in-page Player (WebXash)' : 'Cargar en Visor Integrado (WebXash)'}</span>
-                </button>
-              </div>
+              <ul className="list-disc list-inside space-y-1.5 text-xs text-zinc-400">
+                <li>
+                  <strong className="text-zinc-200">Half-Life 1 (25th Anniversary Edition en Steam):</strong> La versión oficial y remasterizada por Valve, con soporte 4K, multijugador y compatible con cualquier PC moderna.
+                </li>
+                <li>
+                  <strong className="text-zinc-200">Black Mesa (Steam):</strong> La recreación completa en motor Source con gráficos modernos y los capítulos de Xen completamente reinventados.
+                </li>
+                <li>
+                  <strong className="text-zinc-200">WebXash (Si tienes tus archivos de Steam):</strong> Si posees el juego original en Steam, puedes comprimir tu carpeta <code className="text-orange-400">valve/</code> en un archivo ZIP y montarlo localmente en el proyecto de código abierto de WebXash.
+                </li>
+              </ul>
             </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-xs text-zinc-400 bg-zinc-950 px-4 py-2 rounded-xl border border-zinc-800">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>{esIngles ? 'WebXash Engine running via WebAssembly' : 'Motor WebXash ejecutándose en WebAssembly'}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <a
-                    href="https://x8bitrain.github.io/webXash/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-orange-400 hover:underline flex items-center gap-1 font-semibold"
-                  >
-                    <span>{esIngles ? 'Open full screen tab' : 'Abrir en pestaña completa'}</span>
-                    <span>↗</span>
-                  </a>
-                  <button
-                    onClick={() => setJuego3DIniciado(false)}
-                    className="text-zinc-500 hover:text-zinc-300 font-bold ml-2 cursor-pointer"
-                  >
-                    ✕ {esIngles ? 'Close' : 'Cerrar'}
-                  </button>
-                </div>
-              </div>
 
-              <div className="relative bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden aspect-video shadow-2xl min-h-[480px]">
-                {cargando3D && (
-                  <div className="absolute inset-0 bg-zinc-950 flex flex-col items-center justify-center z-10 gap-3">
-                    <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                    <p className="text-xs font-mono text-zinc-400">
-                      {esIngles ? 'Loading WebAssembly GoldSrc engine...' : 'Cargando motor GoldSrc WebAssembly...'}
-                    </p>
-                  </div>
-                )}
-
-                {/* Iframe con webXash oficial y activo */}
-                <iframe
-                  src="https://x8bitrain.github.io/webXash/"
-                  className="w-full h-full min-h-[480px] border-0"
-                  allow="autoplay; fullscreen; pointer-lock"
-                  onLoad={() => setCargando3D(false)}
-                  title="Half-Life 1 WebAssembly (WebXash)"
-                />
-              </div>
-            </div>
-          )}
+            <p className="text-xs text-zinc-400">
+              {esIngles
+                ? 'Because of this, we created our native "Crowbar Strike" mini-game above: it runs directly in your browser with zero downloads, no copyright issues, and authentic Half-Life vibes!'
+                : 'Por eso creamos el minijuego nativo «Crowbar Strike» en la pestaña anterior: corre directamente en tu navegador al 100%, sin descargas pesadas, sin errores de enlaces caídos y con todo el espíritu de Black Mesa.'}
+            </p>
+          </div>
         </div>
       )}
     </div>
