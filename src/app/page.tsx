@@ -13,7 +13,7 @@ import { CalculadoraVida } from '@/components/CalculadoraVida';
 import { RadioBlackMesa } from '@/components/RadioBlackMesa';
 import { Idioma, TRADUCCIONES } from '@/lib/i18n';
 
-type SeccionActiva = 'inicio' | 'juegos' | 'timeline' | 'fuentes';
+type SeccionActiva = 'inicio' | 'noticias' | 'juegos' | 'timeline' | 'fuentes';
 
 export default function HomePage() {
   const [idioma, setIdioma] = useState<Idioma>('es');
@@ -134,6 +134,17 @@ export default function HomePage() {
           </button>
 
           <button
+            onClick={() => setSeccionActiva('noticias')}
+            className={`text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+              seccionActiva === 'noticias'
+                ? 'bg-orange-600 text-white shadow-sm'
+                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'
+            }`}
+          >
+            {t.tabNoticias}
+          </button>
+
+          <button
             onClick={() => setSeccionActiva('juegos')}
             className={`text-xs sm:text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors ${
               seccionActiva === 'juegos'
@@ -205,12 +216,10 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* SECCIÓN 1: INICIO (Radar + Stress Reliever + Noticias + Altar) */}
+      {/* SECCIÓN 1: INICIO (Radar + Stress Reliever + Calculadora + Altar) */}
       <div className={seccionActiva === 'inicio' ? 'w-full' : 'hidden'}>
         <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-8">
-          <div className="flex justify-center lg:justify-start">
-            <CalculadoraVida idioma={idioma} />
-          </div>
+          <div className="hidden lg:block" />
 
           <div className="flex flex-col items-center">
             <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-4xl font-bold text-orange-500 mb-4 shadow-lg shadow-orange-500/10">
@@ -293,35 +302,40 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Grilla de 2 columnas en escritorio: Noticias a la izquierda y Altar a la derecha */}
+        {/* Grilla de 2 columnas en escritorio: Calculadora de Vida a la izquierda y Altar a la derecha */}
         <div className="mt-12 w-full grid grid-cols-1 lg:grid-cols-2 gap-8 xl:gap-12 items-start">
-          <section className="w-full text-left">
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
-              <h2 className="text-xl font-bold text-zinc-100">
-                {t.tituloNoticias}
-              </h2>
-              <span className="text-xs text-zinc-500">
-                {t.actualizadoDiario}
-              </span>
-            </div>
-
-            {cargandoNoticias ? (
-              <p className="text-zinc-500 text-sm">{t.buscandoNoticias}</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {noticias.map((noticia, index) => (
-                  <TarjetaNoticia
-                    key={noticia.link || noticia.titulo || index}
-                    noticia={noticia}
-                    idioma={idioma}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
+          <CalculadoraVida idioma={idioma} />
           <AltarPlegarias idioma={idioma} />
         </div>
+      </div>
+
+      {/* SECCIÓN NOTICIAS Y RUMORES */}
+      <div className={seccionActiva === 'noticias' ? 'w-full' : 'hidden'}>
+        <section className="w-full max-w-5xl mx-auto text-left">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-6">
+            <div>
+              <h2 className="text-xl font-bold text-zinc-100 flex items-center gap-2">
+                <span>📰</span>
+                <span>{t.tituloNoticias}</span>
+              </h2>
+              <p className="text-xs text-zinc-500 mt-1">{t.actualizadoDiario}</p>
+            </div>
+          </div>
+
+          {cargandoNoticias ? (
+            <p className="text-zinc-500 text-sm">{t.buscandoNoticias}</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {noticias.map((noticia, index) => (
+                <TarjetaNoticia
+                  key={noticia.link || noticia.titulo || index}
+                  noticia={noticia}
+                  idioma={idioma}
+                />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       {/* SECCIÓN 2: JUEGOS SIMILARES */}
