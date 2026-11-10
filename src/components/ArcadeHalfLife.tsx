@@ -890,35 +890,61 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
                 </button>
 
                 <a
-                  href="https://archive.org/details/half-life-uplink-webassembly"
+                  href="https://x8bitrain.github.io/webXash/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 text-xs font-semibold px-4 py-3 rounded-xl transition-colors inline-flex items-center gap-2"
                 >
-                  <span>🌐</span>
-                  <span>{esIngles ? 'Open Mirror on Archive.org' : 'Abrir Espejo en Archive.org'}</span>
+                  <span>↗</span>
+                  <span>{esIngles ? 'Open in New Tab (Full Screen)' : 'Abrir en Nueva Pestaña (Pantalla Completa)'}</span>
                 </a>
               </div>
             </div>
           ) : (
-            <div className="relative bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden aspect-video shadow-2xl">
-              {cargando3D && (
-                <div className="absolute inset-0 bg-zinc-950 flex flex-col items-center justify-center z-10 gap-3">
-                  <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-xs font-mono text-zinc-400">
-                    {esIngles ? 'Mounting WebAssembly files & pak0.pak...' : 'Montando archivos WebAssembly y pak0.pak...'}
-                  </p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs text-zinc-400 bg-zinc-950 px-4 py-2 rounded-xl border border-zinc-800">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{esIngles ? 'WebXash Engine running via WebAssembly' : 'Motor WebXash ejecutándose en WebAssembly'}</span>
                 </div>
-              )}
+                <div className="flex items-center gap-3">
+                  <a
+                    href="https://x8bitrain.github.io/webXash/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-orange-400 hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    <span>{esIngles ? 'Open full screen tab' : 'Abrir en pestaña completa'}</span>
+                    <span>↗</span>
+                  </a>
+                  <button
+                    onClick={() => setJuego3DIniciado(false)}
+                    className="text-zinc-500 hover:text-zinc-300 font-bold ml-2 cursor-pointer"
+                  >
+                    ✕ {esIngles ? 'Close' : 'Cerrar'}
+                  </button>
+                </div>
+              </div>
 
-              {/* Iframe con el sandbox WebAssembly optimizado */}
-              <iframe
-                src="https://archive.org/embed/half-life-uplink-webassembly"
-                className="w-full h-full border-0"
-                allow="autoplay; fullscreen; pointer-lock"
-                onLoad={() => setCargando3D(false)}
-                title="Half-Life 1 WebAssembly"
-              />
+              <div className="relative bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden aspect-video shadow-2xl min-h-[480px]">
+                {cargando3D && (
+                  <div className="absolute inset-0 bg-zinc-950 flex flex-col items-center justify-center z-10 gap-3">
+                    <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-xs font-mono text-zinc-400">
+                      {esIngles ? 'Loading WebAssembly GoldSrc engine...' : 'Cargando motor GoldSrc WebAssembly...'}
+                    </p>
+                  </div>
+                )}
+
+                {/* Iframe con webXash oficial y activo */}
+                <iframe
+                  src="https://x8bitrain.github.io/webXash/"
+                  className="w-full h-full min-h-[480px] border-0"
+                  allow="autoplay; fullscreen; pointer-lock"
+                  onLoad={() => setCargando3D(false)}
+                  title="Half-Life 1 WebAssembly (WebXash)"
+                />
+              </div>
             </div>
           )}
         </div>
