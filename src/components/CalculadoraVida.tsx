@@ -33,13 +33,12 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
       return;
     }
 
-    const fechaNacimiento = new Date(`${anioNum}-07-01`).getTime(); // Usamos mitad de año como promedio
+    const fechaNacimiento = new Date(`${anioNum}-07-01`).getTime();
     const ahora = Date.now();
 
     const diasTotalesVida = Math.max(1, Math.floor((ahora - fechaNacimiento) / (1000 * 60 * 60 * 24)));
     const diasEsperando = Math.floor((ahora - fechaEpisodeTwo) / (1000 * 60 * 60 * 24));
 
-    // Si nació después del 10 de octubre de 2007
     const diasEsperadosReales = Math.min(diasTotalesVida, Math.max(0, diasEsperando));
     const porcentajeVida = Math.min(100, Math.round((diasEsperadosReales / diasTotalesVida) * 100));
 
@@ -70,20 +69,18 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
   }
 
   return (
-    <section className="w-full bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-6 sm:p-8 text-left shadow-xl mb-12">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-zinc-800 pb-4 mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <span>⏳</span>
-            <span>{t.calculadoraTitulo}</span>
-          </h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            {t.calculadoraSubtitulo}
-          </p>
-        </div>
+    <aside className="w-full max-w-[280px] bg-zinc-900/90 border border-zinc-800 rounded-2xl p-4 shadow-xl text-left select-none">
+      <div className="mb-3 text-center sm:text-left">
+        <h3 className="text-sm font-bold text-orange-400 flex items-center justify-center sm:justify-start gap-1.5">
+          <span>⏳</span>
+          <span>{t.calculadoraTitulo}</span>
+        </h3>
+        <p className="text-[11px] text-zinc-400 mt-0.5 leading-snug">
+          {t.calculadoraSubtitulo}
+        </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 max-w-lg mb-6">
+      <div className="flex flex-col gap-2">
         <input
           type="number"
           min="1930"
@@ -94,61 +91,46 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
           onKeyDown={(e) => {
             if (e.key === 'Enter') calcular();
           }}
-          className="bg-zinc-950 border border-zinc-800 focus:border-orange-500 rounded-xl px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none flex-1"
+          className="w-full bg-zinc-950 border border-zinc-800 focus:border-orange-500 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none"
         />
 
         <button
           onClick={calcular}
-          className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-6 py-2.5 rounded-xl transition-colors cursor-pointer shadow-md whitespace-nowrap"
+          className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-2 rounded-xl transition-colors cursor-pointer shadow-md"
         >
           {t.calculadoraBotonCalcular}
         </button>
       </div>
 
       {error && (
-        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-lg mb-4 inline-block">
+        <p className="mt-2 text-[11px] text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-1.5 rounded-lg">
           {error}
         </p>
       )}
 
       {resultado && (
-        <div className="bg-zinc-950/80 border border-orange-500/30 rounded-xl p-5 sm:p-6 mt-4 animate-in fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5 text-center sm:text-left">
-            <div className="bg-zinc-900/50 border border-zinc-800/80 p-3.5 rounded-xl">
-              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
-                2007 (Episode Two)
+        <div className="mt-3 pt-3 border-t border-zinc-800/80 animate-in fade-in space-y-2.5">
+          <div className="bg-zinc-950 p-2.5 rounded-xl border border-zinc-800 flex items-center justify-between">
+            <div>
+              <span className="text-[10px] text-zinc-500 block uppercase font-bold tracking-wider">
+                {idioma === 'es' ? 'En 2007 vs Hoy' : 'In 2007 vs Today'}
               </span>
-              <p className="text-base font-bold text-zinc-200">
-                {t.calculadoraTenias(resultado.edad2007)}
-              </p>
+              <span className="text-xs font-semibold text-zinc-200">
+                {resultado.edad2007} {idioma === 'es' ? 'años' : 'yrs'} → {resultado.edadHoy} {idioma === 'es' ? 'años' : 'yrs'}
+              </span>
             </div>
-
-            <div className="bg-zinc-900/50 border border-zinc-800/80 p-3.5 rounded-xl">
-              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider block mb-1">
-                Actualidad
-              </span>
-              <p className="text-base font-bold text-zinc-200">
-                {t.calculadoraHoyTienes(resultado.edadHoy)}
-              </p>
-            </div>
-
-            <div className="bg-orange-500/10 border border-orange-500/30 p-3.5 rounded-xl flex flex-col justify-center">
-              <span className="text-[11px] font-bold text-orange-400 uppercase tracking-wider block mb-0.5">
-                Porcentaje de tu Vida
-              </span>
-              <p className="text-2xl sm:text-3xl font-black text-orange-500">
+            <div className="text-right">
+              <span className="text-lg font-black text-orange-500 block leading-tight">
                 {resultado.porcentajeVida}%
-              </p>
+              </span>
+              <span className="text-[9px] text-orange-400/80 font-medium block">
+                {idioma === 'es' ? 'de tu vida' : 'of your life'}
+              </span>
             </div>
           </div>
 
-          {/* Barra visual de progreso de la vida esperando */}
-          <div className="mb-4">
-            <div className="flex justify-between text-xs text-zinc-400 font-medium mb-1.5">
-              <span>{t.calculadoraPorcentaje(resultado.porcentajeVida)}</span>
-              <span className="text-orange-400 font-bold">{t.calculadoraDiasTotales(resultado.diasEsperando)}</span>
-            </div>
-            <div className="w-full h-3 bg-zinc-900 rounded-full overflow-hidden border border-zinc-800">
+          <div>
+            <div className="w-full h-2 bg-zinc-950 rounded-full overflow-hidden border border-zinc-800">
               <div
                 style={{ width: `${resultado.porcentajeVida}%` }}
                 className="h-full bg-gradient-to-r from-orange-600 to-amber-500 rounded-full transition-all duration-700"
@@ -156,21 +138,15 @@ export function CalculadoraVida({ idioma = 'es' }: CalculadoraVidaProps) {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-zinc-900">
-            <p className="text-xs text-zinc-400 italic">
-              &ldquo;{idioma === 'es' ? 'El hombre adecuado en el sitio equivocado puede cambiar el rumbo del mundo.' : 'The right man in the wrong place can make all the difference in the world.'}&rdquo;
-            </p>
-
-            <button
-              onClick={compartirResultado}
-              className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 hover:border-orange-500/50 text-zinc-200 hover:text-orange-400 text-xs font-semibold px-4 py-2 rounded-lg cursor-pointer transition-colors ml-auto"
-            >
-              <span>📢</span>
-              <span>{copiado ? t.calculadoraCopiado : t.calculadoraCompartir}</span>
-            </button>
-          </div>
+          <button
+            onClick={compartirResultado}
+            className="w-full flex items-center justify-center gap-1.5 bg-zinc-800 hover:bg-zinc-700/80 border border-zinc-700 text-zinc-200 hover:text-orange-400 text-[11px] font-semibold py-1.5 rounded-lg cursor-pointer transition-colors"
+          >
+            <span>📢</span>
+            <span>{copiado ? t.calculadoraCopiado : t.calculadoraCompartir}</span>
+          </button>
         </div>
       )}
-    </section>
+    </aside>
   );
 }

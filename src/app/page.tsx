@@ -205,7 +205,9 @@ export default function HomePage() {
       {/* SECCIÓN 1: INICIO (Radar + Stress Reliever + Noticias + Altar) */}
       <div className={seccionActiva === 'inicio' ? 'w-full' : 'hidden'}>
         <div className="w-full grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] items-center gap-8">
-          <div className="hidden lg:block" />
+          <div className="flex justify-center lg:justify-start">
+            <CalculadoraVida idioma={idioma} />
+          </div>
 
           <div className="flex flex-col items-center">
             <div className="w-20 h-20 rounded-full bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-4xl font-bold text-orange-500 mb-4 shadow-lg shadow-orange-500/10">
@@ -286,11 +288,6 @@ export default function HomePage() {
           <div className="flex justify-center lg:justify-end">
             <PanelCachetadaGabe idioma={idioma} />
           </div>
-        </div>
-
-        {/* CALCULADORA DE VIDA ESPERANDO */}
-        <div className="mt-12 w-full">
-          <CalculadoraVida idioma={idioma} />
         </div>
 
         {/* Grilla de 2 columnas en escritorio: Noticias a la izquierda y Altar a la derecha */}
