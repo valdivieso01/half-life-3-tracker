@@ -37,9 +37,6 @@ interface Particula {
 export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   const esIngles = idioma === 'en';
 
-  // Pestaña activa: 'arcade' (el juego) o 'info' (explicación de emulación)
-  const [pestana, setPestana] = useState<'arcade' | 'info'>('arcade');
-
   // Estados del juego
   const [jugando, setJugando] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -877,46 +874,23 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   return (
     <div className="w-full max-w-5xl mx-auto text-left space-y-6">
       {/* Cabecera */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800 pb-4 gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-zinc-100 flex items-center gap-2">
-            <span>🕹️</span>
-            <span>{esIngles ? 'Sector E: Half-Life Web Arcade' : 'Sector E: Arcade Web de Half-Life'}</span>
-          </h2>
-          <p className="text-xs text-zinc-400 mt-1">
-            {esIngles
-              ? 'Playable in-browser experience built with zero external dependencies and retro audio.'
-              : 'Juego nativo de navegador con audio retro, armamento y cero dependencias externas.'}
-          </p>
-        </div>
-
-        {/* Selector de Pestaña: Juego vs Info */}
-        <div className="inline-flex bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
-          <button
-            onClick={() => setPestana('arcade')}
-            className={`text-xs font-semibold px-3.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-              pestana === 'arcade' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            🔨 {esIngles ? 'Crowbar Strike (Game)' : 'Crowbar Strike (Juego)'}
-          </button>
-          <button
-            onClick={() => setPestana('info')}
-            className={`text-xs font-semibold px-3.5 py-1.5 rounded-lg cursor-pointer transition-colors ${
-              pestana === 'info' ? 'bg-orange-600 text-white shadow-sm' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            ℹ️ {esIngles ? 'About 3D HL1 in Browser' : 'Sobre HL1 3D en la Web'}
-          </button>
-        </div>
+      <div className="border-b border-zinc-800 pb-4">
+        <h2 className="text-2xl font-bold text-zinc-100 flex items-center gap-2">
+          <span>🕹️</span>
+          <span>{esIngles ? 'Crowbar Strike // Black Mesa Defense' : 'Crowbar Strike // Defensa de Black Mesa'}</span>
+        </h2>
+        <p className="text-xs text-zinc-400 mt-1">
+          {esIngles
+            ? 'Defend Sector C against jumping headcrabs! Use your crowbar, 9mm pistol and shotgun.'
+            : '¡Defiende el Sector C contra los headcrabs! Usa tu palanca, la pistola 9mm y la escopeta.'}
+        </p>
       </div>
 
-      {/* PESTAÑA 1: CROWBAR STRIKE (JUEGO 100% FUNCIONAL Y NATIVO) */}
-      {pestana === 'arcade' && (
-        <div
-          ref={contenedorRef}
-          className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden"
-        >
+      {/* JUEGO 100% FUNCIONAL Y NATIVO */}
+      <div
+        ref={contenedorRef}
+        className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden"
+      >
           {/* Barra superior de HUD: HEV Health + Armas + Munición + Récord */}
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4 border-b border-zinc-800/80 pb-3">
             {/* Salud del traje HEV */}
@@ -1084,55 +1058,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             )}
           </div>
         </div>
-      )}
-
-      {/* PESTAÑA 2: INFORMACIÓN Y CÓMO JUGAR A HALF-LIFE 1 EN 3D */}
-      {pestana === 'info' && (
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-6 text-zinc-300 text-sm">
-          <div className="border-b border-zinc-800 pb-4">
-            <h3 className="text-lg font-bold text-zinc-100 flex items-center gap-2">
-              <span>☢️</span>
-              <span>{esIngles ? 'Why does running 3D Half-Life in the browser require setup?' : '¿Por qué jugar a Half-Life 1 en 3D en la web requiere configuración?'}</span>
-            </h3>
-            <p className="text-xs text-zinc-400 mt-1">
-              {esIngles
-                ? 'An honest explanation of WebAssembly GoldSrc emulation and Valve copyright.'
-                : 'Una explicación honesta sobre la emulación de GoldSrc con WebAssembly y los derechos de autor de Valve.'}
-            </p>
-          </div>
-
-          <div className="space-y-4 text-xs sm:text-sm leading-relaxed text-zinc-300">
-            <p>
-              {esIngles
-                ? 'Open-source engines like Xash3D FWGS allow the Half-Life 1 engine to run on WebAssembly. However, Valve Corporation strictly protects the copyrighted game assets (levels, sounds, 3D models and textures). For this reason, web emulators cannot legally host the original game data on public servers, and any unauthorized hosting is regularly taken down.'
-                : 'Motores de código abierto como Xash3D FWGS permiten compilar el motor GoldSrc en WebAssembly. Sin embargo, Valve Corporation protege estrictamente por derechos de autor los archivos de juego originales (mapas, texturas, modelos y voces). Por este motivo, ningún sitio web puede alojar legalmente los datos del juego completo en servidores públicos, y los enlaces no oficiales son dados de baja con frecuencia.'}
-            </p>
-
-            <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 space-y-2">
-              <h4 className="text-orange-400 font-bold text-xs uppercase tracking-wider">
-                {esIngles ? 'How to play the classic games today:' : 'Cómo jugar a los clásicos hoy en día:'}
-              </h4>
-              <ul className="list-disc list-inside space-y-1.5 text-xs text-zinc-400">
-                <li>
-                  <strong className="text-zinc-200">Half-Life 1 (25th Anniversary Edition en Steam):</strong> La versión oficial y remasterizada por Valve, con soporte 4K, multijugador y compatible con cualquier PC moderna.
-                </li>
-                <li>
-                  <strong className="text-zinc-200">Black Mesa (Steam):</strong> La recreación completa en motor Source con gráficos modernos y los capítulos de Xen completamente reinventados.
-                </li>
-                <li>
-                  <strong className="text-zinc-200">WebXash (Si tienes tus archivos de Steam):</strong> Si posees el juego original en Steam, puedes comprimir tu carpeta <code className="text-orange-400">valve/</code> en un archivo ZIP y montarlo localmente en el proyecto de código abierto de WebXash.
-                </li>
-              </ul>
-            </div>
-
-            <p className="text-xs text-zinc-400">
-              {esIngles
-                ? 'Because of this, we created our native "Crowbar Strike" mini-game above: it runs directly in your browser with zero downloads, no copyright issues, and authentic Half-Life vibes!'
-                : 'Por eso creamos el minijuego nativo «Crowbar Strike» en la pestaña anterior: corre directamente en tu navegador al 100%, sin descargas pesadas, sin errores de enlaces caídos y con todo el espíritu de Black Mesa.'}
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
