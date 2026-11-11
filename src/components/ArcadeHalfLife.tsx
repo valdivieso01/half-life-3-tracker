@@ -9,6 +9,21 @@ interface ArcadeHalfLifeProps {
 
 type TipoArma = 'palanca' | 'pistola' | 'escopeta';
 
+interface RecordFichero {
+  tag: string;
+  puntos: number;
+  arma: string;
+  sector: string;
+}
+
+const RECORDS_POR_DEFECTO: RecordFichero[] = [
+  { tag: 'GAB', puntos: 15200, arma: '💥', sector: 'VALVE' },
+  { tag: 'GFM', puntos: 12400, arma: '🔨', sector: 'HEV-4' },
+  { tag: 'BAR', puntos: 9800, arma: '🔫', sector: 'SEC-C' },
+  { tag: 'ALY', puntos: 7600, arma: '🔫', sector: 'CIT17' },
+  { tag: 'GMN', puntos: 5500, arma: '🔨', sector: 'STASIS' },
+];
+
 interface EnemigoOItem {
   id: number;
   x: number;
@@ -41,7 +56,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   const [jugando, setJugando] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [puntos, setPuntos] = useState(0);
-  const [record, setRecord] = useState(0);
+  const [record, setRecord] = useState(15200);
   const [salud, setSalud] = useState(100);
   const [combo, setCombo] = useState(0);
   const [audioHabilitado, setAudioHabilitado] = useState(true);
@@ -51,6 +66,11 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   const [armaActual, setArmaActual] = useState<TipoArma>('palanca');
   const [balasPistola, setBalasPistola] = useState(24);
   const [balasEscopeta, setBalasEscopeta] = useState(8);
+
+  // Fichero / Hall of Fame
+  const [tablaRecords, setTablaRecords] = useState<RecordFichero[]>(RECORDS_POR_DEFECTO);
+  const [tagJugador, setTagJugador] = useState('');
+  const [recordGuardado, setRecordGuardado] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contenedorRef = useRef<HTMLDivElement | null>(null);
@@ -77,17 +97,47 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     audioHabilitado: true,
   });
 
-  // Cargar récord de localStorage
+  // Cargar tabla de récords de localStorage
   useEffect(() => {
     try {
-      const guardado = localStorage.getItem('hl3_arcade_record');
-      if (guardado) {
-        setRecord(Number(guardado) || 0);
+      const guardados = localStorage.getItem('hl3_fichines_records');
+      if (guardados) {
+        const parseados: RecordFichero[] = JSON.parse(guardados);
+        if (Array.isArray(parseados) && parseados.length > 0) {
+          setTablaRecords(parseados);
+          setRecord(parseados[0].puntos);
+        }
       }
     } catch {
       // Ignorar restricciones locales
     }
   }, []);
+
+  // Guardar nuevo puntaje en el Hall of Fame de Fichines
+  function guardarNuevoRecord() {
+    const tagLimpio = (tagJugador.trim() || 'FRE').toUpperCase().slice(0, 3);
+    const armaIcono = armaActual === 'escopeta' ? '💥' : armaActual === 'pistola' ? '🔫' : '🔨';
+    const nuevaEntrada: RecordFichero = {
+      tag: tagLimpio,
+      puntos: puntos,
+      arma: armaIcono,
+      sector: 'SEC-C',
+    };
+
+    const nuevaLista = [...tablaRecords, nuevaEntrada]
+      .sort((a, b) => b.puntos - a.puntos)
+      .slice(0, 6);
+
+    setTablaRecords(nuevaLista);
+    setRecord(nuevaLista[0].puntos);
+    setRecordGuardado(true);
+
+    try {
+      localStorage.setItem('hl3_fichines_records', JSON.stringify(nuevaLista));
+    } catch {
+      // Ignorar
+    }
+  }
 
   // Inicializar Web Audio API
   const obtenerAudioContext = useCallback(() => {
@@ -110,7 +160,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     }
   }, [audioHabilitado]);
 
-  // Sintetizador de audio retro para efectos clásicos de Half-Life
+  // Sintetizador de audio retro
   const reproducirSonido = useCallback(
     (tipo: 'palanca' | 'pistola' | 'escopeta' | 'sin_balas' | 'impacto' | 'salto' | 'medkit' | 'caja' | 'dano' | 'flatline') => {
       const ctx = obtenerAudioContext();
@@ -118,7 +168,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       const ahora = ctx.currentTime;
 
       if (tipo === 'palanca') {
-        // Swing metálico rápido
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
@@ -131,7 +180,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.13);
       } else if (tipo === 'pistola') {
-        // Disparo de 9mm Glock (Half-Life 1)
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
@@ -144,7 +192,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.15);
       } else if (tipo === 'escopeta') {
-        // Disparo SPAS-12 pesado y explosivo
         const osc = ctx.createOscillator();
         const osc2 = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -164,7 +211,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.stop(ahora + 0.3);
         osc2.stop(ahora + 0.3);
       } else if (tipo === 'sin_balas') {
-        // Clic de percutor vacío
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';
@@ -176,7 +222,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.05);
       } else if (tipo === 'impacto') {
-        // Clang metálico y crunch alienígena
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sawtooth';
@@ -189,7 +234,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.19);
       } else if (tipo === 'caja') {
-        // Ruido sordo de madera quebrándose
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'triangle';
@@ -202,7 +246,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.16);
       } else if (tipo === 'salto') {
-        // Chillido característico de headcrab saltando
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -216,7 +259,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.19);
       } else if (tipo === 'medkit') {
-        // Tono ascendente de recarga de salud HEV
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -229,7 +271,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.23);
       } else if (tipo === 'dano') {
-        // Alerta de daño del traje
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'square';
@@ -242,7 +283,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         osc.start(ahora);
         osc.stop(ahora + 0.16);
       } else if (tipo === 'flatline') {
-        // Pitido largo continuo de muerte de Gordon Freeman
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
@@ -294,6 +334,8 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     setArmaActual('palanca');
     setBalasPistola(24);
     setBalasEscopeta(8);
+    setRecordGuardado(false);
+    setTagJugador('');
     setGameOver(false);
     setJugando(true);
   }
@@ -341,7 +383,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           if (item.tipo === 'caja') {
             reproducirSonido('caja');
             crearExplosion(item.x, item.y, '#d97706', 15);
-            // La caja suelta munición o vida
             if (Math.random() > 0.5) {
               ref.enemigos.push({
                 id: ref.idContador++,
@@ -416,15 +457,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             setPuntos(ref.puntos);
             setCombo(ref.combo);
 
-            if (ref.puntos > record) {
-              setRecord(ref.puntos);
-              try {
-                localStorage.setItem('hl3_arcade_record', String(ref.puntos));
-              } catch {
-                // Ignorar
-              }
-            }
-
             ref.enemigos.splice(i, 1);
           } else {
             reproducirSonido('impacto');
@@ -449,7 +481,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       reproducirSonido('pistola');
       crearExplosion(mx, my, '#fbbf24', 6);
 
-      // Impacto en el punto de mira
       for (let i = ref.enemigos.length - 1; i >= 0; i--) {
         const item = ref.enemigos[i];
         const dist = Math.hypot(item.x - mx, item.y - my);
@@ -480,7 +511,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       reproducirSonido('escopeta');
       crearExplosion(mx, my, '#f97316', 20);
 
-      // Disparo en abanico (destruye múltiples enemigos en el área)
       const radioEscopeta = 110;
       for (let i = ref.enemigos.length - 1; i >= 0; i--) {
         const item = ref.enemigos[i];
@@ -500,9 +530,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         }
       }
     }
-  }, [reproducirSonido, record]);
+  }, [reproducirSonido]);
 
-  // Manejo de eventos de mouse y teclado
+  // Manejo de eventos
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -562,7 +592,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     };
   }, [dispararOAtacar]);
 
-  // Bucle de animación (Game Loop)
+  // Game Loop
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -577,11 +607,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       const w = canvas.width || 800;
       const h = canvas.height || 500;
 
-      // Fondo metálico oscuro de Black Mesa
       ctx.fillStyle = '#080a0f';
       ctx.fillRect(0, 0, w, h);
 
-      // Rejilla de paneles de ventilación
       ctx.strokeStyle = '#151922';
       ctx.lineWidth = 1;
       for (let x = 0; x < w; x += 40) {
@@ -597,7 +625,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         ctx.stroke();
       }
 
-      // Viga superior con remaches y rótulo
       ctx.fillStyle = '#1c2230';
       ctx.fillRect(0, 0, w, 24);
       ctx.fillStyle = '#ea580c';
@@ -615,13 +642,13 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           let maxVida = 1;
 
           if (azar > 0.88) {
-            tipo = 'caja'; // Caja de madera con suministros
+            tipo = 'caja';
             maxVida = 1;
           } else if (azar > 0.72) {
-            tipo = 'poison'; // Headcrab venenoso
+            tipo = 'poison';
             maxVida = 2;
           } else if (azar > 0.45) {
-            tipo = 'fast'; // Headcrab rápido
+            tipo = 'fast';
           }
 
           const radio = tipo === 'caja' ? 20 : tipo === 'poison' ? 22 : 18;
@@ -646,14 +673,13 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           }
         }
 
-        // Dibujar y actualizar enemigos y cajas
+        // Dibujar y actualizar enemigos
         for (let i = ref.enemigos.length - 1; i >= 0; i--) {
           const item = ref.enemigos[i];
           item.x += item.vx;
           item.y += item.vy;
           item.rotacion += item.rotSpeed;
 
-          // Rebote en paredes
           if (item.x - item.radius < 0 || item.x + item.radius > w) {
             item.vx *= -1;
           }
@@ -663,14 +689,12 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           ctx.rotate(item.rotacion);
 
           if (item.tipo === 'caja') {
-            // Caja de madera de suministros de Black Mesa
             ctx.fillStyle = '#78350f';
             ctx.strokeStyle = '#b45309';
             ctx.lineWidth = 2;
             ctx.fillRect(-18, -18, 36, 36);
             ctx.strokeRect(-18, -18, 36, 36);
 
-            // Cruz en la caja
             ctx.beginPath();
             ctx.moveTo(-18, -18);
             ctx.lineTo(18, 18);
@@ -678,12 +702,10 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.lineTo(-18, 18);
             ctx.stroke();
 
-            // Sello lambda
             ctx.fillStyle = '#f59e0b';
             ctx.font = 'bold 12px monospace';
             ctx.fillText('λ', -4, 4);
           } else if (item.tipo === 'medkit') {
-            // Botiquín HEV
             ctx.fillStyle = '#064e3b';
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 2;
@@ -695,7 +717,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.fillRect(-3, -9, 6, 18);
             ctx.fillRect(-9, -3, 18, 6);
           } else if (item.tipo === 'municion') {
-            // Caja de munición dorada
             ctx.fillStyle = '#713f12';
             ctx.strokeStyle = '#eab308';
             ctx.lineWidth = 2;
@@ -707,7 +728,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.font = 'bold 9px monospace';
             ctx.fillText('AMMO', -12, 4);
           } else {
-            // Headcrab
             const colorCuerpo =
               item.tipo === 'poison' ? '#581c87' : item.tipo === 'fast' ? '#c2410c' : '#b45309';
             const colorPiel =
@@ -723,7 +743,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.arc(0, -2, item.radius * 0.7, Math.PI, 0);
             ctx.fill();
 
-            // Patas
             ctx.strokeStyle = colorPiel;
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -733,7 +752,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.lineTo(item.radius * 1.3, item.radius * 0.9);
             ctx.stroke();
 
-            // Ojos
             ctx.fillStyle = '#ef4444';
             ctx.beginPath();
             ctx.arc(-4, 3, 2, 0, Math.PI * 2);
@@ -743,7 +761,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
           ctx.restore();
 
-          // Si el enemigo toca el fondo (alcanza a Gordon)
           if (item.y + item.radius >= h - 20) {
             if (item.tipo !== 'medkit' && item.tipo !== 'caja' && item.tipo !== 'municion') {
               ref.salud = Math.max(0, ref.salud - (item.tipo === 'poison' ? 30 : 20));
@@ -783,7 +800,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           }
         }
 
-        // Dibujar Arma / Mira en la posición del ratón
+        // Arma y Mira
         const mx = ref.mousePos.x;
         const my = ref.mousePos.y;
 
@@ -794,7 +811,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         ctx.translate(mx, my);
 
         if (ref.armaActual === 'palanca') {
-          // Palanca clásica roja
           const angulo = ref.swingTimer > 0 ? -0.7 : -0.2;
           ctx.rotate(angulo);
           ctx.strokeStyle = '#dc2626';
@@ -813,7 +829,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           ctx.lineTo(16, -38);
           ctx.stroke();
         } else if (ref.armaActual === 'pistola') {
-          // Pistola 9mm con retroceso
           const retroceso = ref.disparoTimer > 0 ? -4 : 0;
           ctx.translate(0, retroceso);
           ctx.fillStyle = '#334155';
@@ -821,7 +836,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           ctx.fillStyle = '#64748b';
           ctx.fillRect(-4, -22, 8, 12);
         } else if (ref.armaActual === 'escopeta') {
-          // Cañón doble de escopeta
           const retroceso = ref.disparoTimer > 0 ? -7 : 0;
           ctx.translate(0, retroceso);
           ctx.fillStyle = '#1e293b';
@@ -831,7 +845,6 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           ctx.fillRect(-9, 8, 18, 12);
         }
 
-        // Mira HUD estilo Half-Life
         ctx.strokeStyle = '#f97316';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
@@ -874,29 +887,40 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   return (
     <div className="w-full max-w-5xl mx-auto text-left space-y-6">
       {/* Cabecera */}
-      <div className="border-b border-zinc-800 pb-4">
-        <h2 className="text-2xl font-bold text-zinc-100 flex items-center gap-2">
-          <span>🕹️</span>
-          <span>{esIngles ? 'Crowbar Strike // Black Mesa Defense' : 'Crowbar Strike // Defensa de Black Mesa'}</span>
-        </h2>
-        <p className="text-xs text-zinc-400 mt-1">
-          {esIngles
-            ? 'Defend Sector C against jumping headcrabs! Use your crowbar, 9mm pistol and shotgun.'
-            : '¡Defiende el Sector C contra los headcrabs! Usa tu palanca, la pistola 9mm y la escopeta.'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800 pb-4 gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-zinc-100 flex items-center gap-2">
+            <span>🕹️</span>
+            <span>{esIngles ? 'Crowbar Strike // Black Mesa Defense' : 'Crowbar Strike // Defensa de Black Mesa'}</span>
+          </h2>
+          <p className="text-xs text-zinc-400 mt-1">
+            {esIngles
+              ? 'Defend Sector C against jumping headcrabs! Use your crowbar, 9mm pistol and shotgun.'
+              : '¡Defiende el Sector C contra los headcrabs! Usa tu palanca, la pistola 9mm y la escopeta.'}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 font-mono text-xs">
+          <span className="text-zinc-500">HI-SCORE:</span>
+          <span className="text-orange-400 font-bold text-sm bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
+            {record.toLocaleString()}
+          </span>
+        </div>
       </div>
 
-      {/* JUEGO 100% FUNCIONAL Y NATIVO */}
-      <div
-        ref={contenedorRef}
-        className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 sm:p-6 shadow-2xl relative overflow-hidden"
-      >
-          {/* Barra superior de HUD: HEV Health + Armas + Munición + Récord */}
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4 border-b border-zinc-800/80 pb-3">
+      {/* Grilla principal: Juego Canvas a la izquierda + Tabla de Fichines a la derecha */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
+        {/* LADO IZQUIERDO: CONTENEDOR DEL JUEGO */}
+        <div
+          ref={contenedorRef}
+          className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-2xl relative overflow-hidden"
+        >
+          {/* Barra superior de HUD: HEV Health + Armas + Munición */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3 border-b border-zinc-800/80 pb-3">
             {/* Salud del traje HEV */}
-            <div className="flex items-center gap-3">
-              <span className="text-orange-500 font-mono font-bold text-xs">HEV SUIT</span>
-              <div className="w-32 bg-zinc-900 border border-zinc-700 h-4 rounded-full overflow-hidden p-0.5">
+            <div className="flex items-center gap-2.5">
+              <span className="text-orange-500 font-mono font-bold text-xs">HEV</span>
+              <div className="w-24 sm:w-28 bg-zinc-900 border border-zinc-700 h-3.5 rounded-full overflow-hidden p-0.5">
                 <div
                   className={`h-full rounded-full transition-all duration-200 ${
                     salud > 50 ? 'bg-emerald-500' : salud > 25 ? 'bg-amber-500' : 'bg-red-500'
@@ -908,15 +932,15 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             </div>
 
             {/* Selector interactivo de armas */}
-            <div className="flex items-center gap-1.5 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 font-mono text-xs">
+            <div className="flex items-center gap-1 bg-zinc-900/90 border border-zinc-800 rounded-xl p-1 font-mono text-xs">
               <button
                 onClick={() => cambiarArma('palanca')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1 ${
                   armaActual === 'palanca'
                     ? 'bg-orange-600 text-white shadow'
                     : 'text-zinc-400 hover:text-zinc-200'
                 }`}
-                title="[1] Palanca cuerpo a cuerpo (Munición infinita)"
+                title="[1] Palanca cuerpo a cuerpo (Infinita)"
               >
                 <span>[1] 🔨</span>
                 <span>∞</span>
@@ -924,7 +948,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
               <button
                 onClick={() => cambiarArma('pistola')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1 ${
                   armaActual === 'pistola'
                     ? 'bg-orange-600 text-white shadow'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -937,7 +961,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
               <button
                 onClick={() => cambiarArma('escopeta')}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`px-2 py-1 rounded-lg font-semibold transition-all cursor-pointer flex items-center gap-1 ${
                   armaActual === 'escopeta'
                     ? 'bg-orange-600 text-white shadow'
                     : 'text-zinc-400 hover:text-zinc-200'
@@ -949,34 +973,30 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
               </button>
             </div>
 
-            {/* Puntos y Récord */}
-            <div className="flex items-center gap-4 font-mono text-xs">
-              <div>
-                <span className="text-zinc-500">{esIngles ? 'SCORE:' : 'PUNTOS:'} </span>
+            {/* Puntos y Controles */}
+            <div className="flex items-center gap-3">
+              <div className="font-mono text-xs">
+                <span className="text-zinc-500">{esIngles ? 'PTS:' : 'PTS:'} </span>
                 <strong className="text-orange-400 text-sm">{puntos.toLocaleString()}</strong>
               </div>
-              <div>
-                <span className="text-zinc-500">{esIngles ? 'BEST:' : 'RÉCORD:'} </span>
-                <strong className="text-zinc-300 text-sm">{record.toLocaleString()}</strong>
-              </div>
+
               {combo > 1 && (
-                <span className="bg-orange-500/20 text-orange-400 border border-orange-500/40 px-2 py-0.5 rounded text-[11px] font-bold animate-pulse">
-                  {combo}x COMBO!
+                <span className="bg-orange-500/20 text-orange-400 border border-orange-500/40 px-1.5 py-0.5 rounded text-[10px] font-bold animate-pulse">
+                  {combo}x!
                 </span>
               )}
-            </div>
 
-            {/* Utilidades de pantalla y audio */}
-            <div className="flex items-center gap-2">
               <button
                 onClick={() => setAudioHabilitado((prev) => !prev)}
-                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
+                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors"
+                title={audioHabilitado ? 'Silenciar sonido' : 'Activar sonido'}
               >
-                {audioHabilitado ? '🔊 SFX' : '🔇 Mute'}
+                {audioHabilitado ? '🔊' : '🔇'}
               </button>
+
               <button
                 onClick={alternarPantallaCompleta}
-                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs px-2.5 py-1.5 rounded-lg cursor-pointer transition-colors"
+                className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded-lg cursor-pointer transition-colors"
                 title="Pantalla completa"
               >
                 {enPantallaCompleta ? '🗗' : '⛶'}
@@ -996,68 +1016,156 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             {/* Pantalla inicial antes de jugar */}
             {!jugando && !gameOver && (
               <div className="absolute inset-0 bg-zinc-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-3xl mb-4 text-orange-400 shadow-lg shadow-orange-500/20">
+                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border-2 border-orange-500 flex items-center justify-center text-3xl mb-4 text-orange-400 shadow-lg shadow-orange-500/20 animate-pulse">
                   λ
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-black text-white mb-2 tracking-wide font-mono">
-                  CROWBAR STRIKE // BLACK MESA DEFENSE
+                  CROWBAR STRIKE // SECTOR C
                 </h3>
-                <p className="text-zinc-400 text-xs sm:text-sm max-w-lg mb-6">
+                <p className="text-zinc-400 text-xs sm:text-sm max-w-md mb-5">
                   {esIngles
-                    ? 'Sector C has suffered a containment breach! Smash jumping headcrabs, break supply crates with [λ], and switch weapons [1] Crowbar, [2] 9mm Pistol, [3] Shotgun!'
-                    : '¡El Sector C ha sufrido una brecha de contención! Golpea headcrabs, rompe cajas de suministros con [λ], y cambia de arma con [1] Palanca, [2] Pistola 9mm, [3] Escopeta.'}
+                    ? 'Smash headcrabs, break supply crates [λ], and switch weapons with [1] Crowbar, [2] 9mm, [3] Shotgun!'
+                    : '¡Aplasta headcrabs, rompe cajas de suministros [λ], y cambia de arma con [1] Palanca, [2] Pistola y [3] Escopeta!'}
                 </p>
 
-                <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono text-zinc-400 mb-6 bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 rounded-xl">
-                  <span>🖱️ Clic / Tap: {esIngles ? 'Attack / Shoot' : 'Atacar / Disparar'}</span>
+                <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-zinc-400 mb-6 bg-zinc-900/80 border border-zinc-800 px-4 py-2 rounded-xl">
+                  <span>🖱️ Clic: {esIngles ? 'Attack' : 'Atacar'}</span>
                   <span>⌨️ [1][2][3]: {esIngles ? 'Weapons' : 'Armas'}</span>
-                  <span>📦 Cajas: {esIngles ? 'Ammo & Health' : 'Munición y Salud'}</span>
+                  <span>📦 Cajas: {esIngles ? 'Items' : 'Botín'}</span>
                 </div>
 
                 <button
                   onClick={iniciarPartida}
                   className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-lg shadow-orange-600/30 cursor-pointer transition-all hover:scale-105"
                 >
-                  {esIngles ? '🎮 START MISSION' : '🎮 INICIAR MISIÓN'}
+                  {esIngles ? '🎮 INSERT COIN / PLAY' : '🎮 INSERT COIN / JUGAR'}
                 </button>
               </div>
             )}
 
-            {/* Pantalla de GAME OVER */}
+            {/* Pantalla de GAME OVER con ingreso de iniciales estilo FICHINES */}
             {gameOver && (
               <div className="absolute inset-0 bg-red-950/90 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-fade-in">
                 <p className="text-red-500 font-mono text-xs font-bold tracking-widest mb-1">
                   SUBJECT: FREEMAN // STATUS: EVALUATION TERMINATED
                 </p>
-                <h3 className="text-3xl font-black text-white mb-3 font-mono">
-                  {esIngles ? 'HEV SUIT FLATLINE' : 'TRAJE HEV DESACTIVADO'}
+                <h3 className="text-3xl font-black text-white mb-2 font-mono">
+                  {esIngles ? 'GAME OVER' : 'FIN DEL JUEGO'}
                 </h3>
-                <p className="text-zinc-300 text-xs sm:text-sm max-w-md mb-5">
-                  {esIngles
-                    ? 'The right man in the wrong place can make all the difference in the world...'
-                    : 'El hombre adecuado en el sitio equivocado puede cambiar el rumbo del mundo...'}
-                </p>
 
-                <div className="bg-zinc-900/90 border border-red-500/30 rounded-xl px-6 py-3 mb-6 font-mono text-center">
-                  <p className="text-zinc-400 text-xs">{esIngles ? 'FINAL SCORE' : 'PUNTAJE FINAL'}</p>
+                <div className="bg-zinc-900/90 border border-red-500/30 rounded-xl px-6 py-2.5 mb-4 font-mono text-center">
+                  <p className="text-zinc-400 text-xs">{esIngles ? 'FINAL SCORE' : 'TU PUNTAJE'}</p>
                   <p className="text-2xl font-bold text-orange-400">{puntos.toLocaleString()}</p>
-                  {puntos >= record && puntos > 0 && (
-                    <p className="text-emerald-400 text-[11px] font-semibold mt-1">
-                      ⭐ {esIngles ? 'NEW HIGH SCORE!' : '¡NUEVO RÉCORD!'} ⭐
-                    </p>
-                  )}
                 </div>
+
+                {/* Ingreso de iniciales (3 letras estilo Fichín / Arcade) */}
+                {puntos > 0 && !recordGuardado ? (
+                  <div className="bg-zinc-900 border border-orange-500/50 rounded-xl p-4 mb-4 max-w-xs w-full shadow-lg">
+                    <p className="text-orange-400 font-mono text-xs font-bold mb-2">
+                      ⭐ {esIngles ? 'ENTER YOUR INITIALS (3 LETTERS):' : '¡INGRESA TUS 3 INICIALES!'} ⭐
+                    </p>
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                      <input
+                        type="text"
+                        maxLength={3}
+                        value={tagJugador}
+                        placeholder="GFM"
+                        onChange={(e) => setTagJugador(e.target.value.toUpperCase())}
+                        className="w-28 text-center uppercase tracking-widest font-mono text-xl font-bold bg-zinc-950 border border-orange-500 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                      <button
+                        onClick={guardarNuevoRecord}
+                        className="bg-orange-600 hover:bg-orange-500 text-white font-mono font-bold text-xs px-3 py-2 rounded-lg cursor-pointer transition-colors whitespace-nowrap"
+                      >
+                        {esIngles ? 'SAVE' : 'GUARDAR'}
+                      </button>
+                    </div>
+                  </div>
+                ) : recordGuardado ? (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono text-xs font-bold px-4 py-2 rounded-xl mb-4">
+                    ✓ {esIngles ? 'SCORE SAVED TO HALL OF FAME!' : '¡PUNTAJE REGISTRADO EN EL FICHERO!'}
+                  </div>
+                ) : null}
 
                 <button
                   onClick={iniciarPartida}
-                  className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-lg cursor-pointer transition-all hover:scale-105"
+                  className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-8 py-3 rounded-xl shadow-lg cursor-pointer transition-all hover:scale-105"
                 >
-                  🔄 {esIngles ? 'PLAY AGAIN' : 'REINTENTAR'}
+                  🔄 {esIngles ? 'PLAY AGAIN' : 'JUGAR DE NUEVO'}
                 </button>
               </div>
             )}
           </div>
         </div>
+
+        {/* LADO DERECHO: TABLA DE MEJORES PUNTAJES ESTILO FICHINES (HALL OF FAME) */}
+        <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 shadow-xl font-mono">
+          <div className="border-b border-zinc-800 pb-3 mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-amber-500 text-base">🏆</span>
+              <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-widest">
+                {esIngles ? 'HALL OF FAME' : 'TOP FICHERO'}
+              </h3>
+            </div>
+            <span className="text-[10px] text-zinc-500 uppercase tracking-wider">BLACK MESA</span>
+          </div>
+
+          <div className="space-y-1.5 text-xs">
+            <div className="grid grid-cols-[30px_1fr_60px_24px] text-[10px] text-zinc-500 font-bold border-b border-zinc-900 pb-1 px-1">
+              <span>POS</span>
+              <span>NAME</span>
+              <span className="text-right">SCORE</span>
+              <span className="text-right">GUN</span>
+            </div>
+
+            {tablaRecords.map((r, idx) => {
+              const esPrimero = idx === 0;
+              const esSegundo = idx === 1;
+              const esTercero = idx === 2;
+
+              return (
+                <div
+                  key={`${r.tag}-${idx}`}
+                  className={`grid grid-cols-[30px_1fr_60px_24px] items-center px-1.5 py-1.5 rounded-lg border transition-all ${
+                    esPrimero
+                      ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold'
+                      : esSegundo
+                        ? 'bg-zinc-900 border-zinc-700/60 text-zinc-200'
+                        : esTercero
+                          ? 'bg-zinc-900/60 border-zinc-800 text-orange-300'
+                          : 'border-transparent text-zinc-400 hover:bg-zinc-900/40'
+                  }`}
+                >
+                  <span className="text-[11px] font-bold">
+                    {esPrimero ? '🥇' : esSegundo ? '🥈' : esTercero ? '🥉' : `${idx + 1}.`}
+                  </span>
+
+                  <span className="tracking-widest font-bold flex items-center gap-1.5">
+                    <span className={esPrimero ? 'text-amber-300' : 'text-orange-400'}>{r.tag}</span>
+                    <span className="text-[9px] text-zinc-600 font-normal">({r.sector})</span>
+                  </span>
+
+                  <span className="text-right font-bold text-[11px] text-zinc-100">
+                    {r.puntos.toLocaleString()}
+                  </span>
+
+                  <span className="text-right text-xs" title="Arma favorita">
+                    {r.arma}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-zinc-900 text-center">
+            <p className="text-[10px] text-zinc-500">
+              {esIngles
+                ? '★ Insert your 3-letter initials upon Game Over to enter the arcade leaderboard.'
+                : '★ Ingresa tus 3 iniciales al terminar la partida para entrar al podio de fichines.'}
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
