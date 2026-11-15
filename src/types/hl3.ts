@@ -31,3 +31,10 @@ export interface RespuestaPlegariasPaginadas {
   paginaActual: number;
   totalPaginas: number;
 }
+
+export interface RecordFichero {
+  id?: number;
+  tag: string;
+  puntos: number;
+  fecha?: string;
+}

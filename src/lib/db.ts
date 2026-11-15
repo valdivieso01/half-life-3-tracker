@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import { Plegaria, RespuestaPlegariasPaginadas } from '@/types/hl3';
+import { Plegaria, RespuestaPlegariasPaginadas, RecordFichero } from '@/types/hl3';
 
 /**
  * CAPA DE BASE DE DATOS POSTGRESQL (src/lib/db.ts)
@@ -35,6 +35,14 @@ export const PLEGARIAS_FALLBACK_DEFAULT: Plegaria[] = [
     ipAutor: 'seed',
     ipsAmen: [],
   },
+];
+
+export const RECORDS_ARCADE_DEFAULT: RecordFichero[] = [
+  { id: 1, tag: 'GAB', puntos: 15200, fecha: 'VALVE' },
+  { id: 2, tag: 'GFM', puntos: 12400, fecha: 'HEV-4' },
+  { id: 3, tag: 'BAR', puntos: 9800, fecha: 'SEC-C' },
+  { id: 4, tag: 'ALY', puntos: 7600, fecha: 'CIT17' },
+  { id: 5, tag: 'GMN', puntos: 5500, fecha: 'STASIS' },
 ];
 
 let tablasInicializadas = false;
@@ -95,6 +103,29 @@ async function asegurarTablasPostgres() {
         '[]'::jsonb
       )
       ON CONFLICT (id) DO NOTHING;
+    `);
+  }
+
+  // Tabla para el Hall of Fame de Fichines / Récords globales del minijuego
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS records_arcade (
+      id SERIAL PRIMARY KEY,
+      tag VARCHAR(3) NOT NULL,
+      puntos INT NOT NULL,
+      fecha TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  const resRecords = await pool.query('SELECT COUNT(*)::int AS cantidad FROM records_arcade');
+  if (resRecords.rows[0].cantidad === 0) {
+    await pool.query(`
+      INSERT INTO records_arcade (tag, puntos)
+      VALUES 
+        ('GAB', 15200),
+        ('GFM', 12400),
+        ('BAR', 9800),
+        ('ALY', 7600),
+        ('GMN', 5500);
     `);
   }
 
@@ -299,4 +330,64 @@ export async function registrarAmenDB(
   );
 
   return obtenerPlegariasPaginadasDB(paginaActual, porPagina, busquedaAutor);
+}
+
+/**
+ * Obtiene los mejores récords de fichines del minijuego desde Postgres.
+ */
+export async function obtenerRecordsArcadeDB(limite = 10): Promise<RecordFichero[]> {
+  try {
+    await asegurarTablasPostgres();
+    const res = await pool.query(
+      `
+      SELECT id, tag, puntos, TO_CHAR(fecha, 'DD/MM/YYYY') as fecha
+      FROM records_arcade
+      ORDER BY puntos DESC, id ASC
+      LIMIT $1;
+      `,
+      [limite]
+    );
+
+    return res.rows.map((r) => ({
+      id: Number(r.id),
+      tag: String(r.tag).toUpperCase(),
+      puntos: Number(r.puntos),
+      fecha: r.fecha,
+    }));
+  } catch (error) {
+    console.warn('⚠️ Error al consultar records_arcade en Postgres, usando fallback:', error);
+    return RECORDS_ARCADE_DEFAULT;
+  }
+}
+
+/**
+ * Guarda un nuevo puntaje en el Hall of Fame de Fichines en Postgres
+ * y retorna la lista actualizada de los mejores récords.
+ */
+export async function guardarRecordArcadeDB(tag: string, puntos: number): Promise<RecordFichero[]> {
+  const tagLimpio = (tag.trim() || 'FRE').toUpperCase().slice(0, 3);
+  const puntosSeguros = Math.max(0, Math.min(Math.floor(puntos), 999999));
+
+  try {
+    await asegurarTablasPostgres();
+    await pool.query(
+      `
+      INSERT INTO records_arcade (tag, puntos)
+      VALUES ($1, $2);
+      `,
+      [tagLimpio, puntosSeguros]
+    );
+
+    return obtenerRecordsArcadeDB(10);
+  } catch (error) {
+    console.warn('⚠️ Error al guardar record en Postgres:', error);
+    const nuevo: RecordFichero = {
+      tag: tagLimpio,
+      puntos: puntosSeguros,
+      fecha: 'HOY',
+    };
+    return [...RECORDS_ARCADE_DEFAULT, nuevo]
+      .sort((a, b) => b.puntos - a.puntos)
+      .slice(0, 10);
+  }
 }

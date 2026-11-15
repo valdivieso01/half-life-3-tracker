@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Idioma } from '@/lib/i18n';
+import { RecordFichero } from '@/types/hl3';
 
 interface ArcadeHalfLifeProps {
   idioma?: Idioma;
@@ -9,19 +10,12 @@ interface ArcadeHalfLifeProps {
 
 type TipoArma = 'palanca' | 'pistola' | 'escopeta';
 
-interface RecordFichero {
-  tag: string;
-  puntos: number;
-  arma: string;
-  sector: string;
-}
-
 const RECORDS_POR_DEFECTO: RecordFichero[] = [
-  { tag: 'GAB', puntos: 15200, arma: '💥', sector: 'VALVE' },
-  { tag: 'GFM', puntos: 12400, arma: '🔨', sector: 'HEV-4' },
-  { tag: 'BAR', puntos: 9800, arma: '🔫', sector: 'SEC-C' },
-  { tag: 'ALY', puntos: 7600, arma: '🔫', sector: 'CIT17' },
-  { tag: 'GMN', puntos: 5500, arma: '🔨', sector: 'STASIS' },
+  { tag: 'GAB', puntos: 15200, fecha: 'VALVE' },
+  { tag: 'GFM', puntos: 12400, fecha: 'HEV-4' },
+  { tag: 'BAR', puntos: 9800, fecha: 'SEC-C' },
+  { tag: 'ALY', puntos: 7600, fecha: 'CIT17' },
+  { tag: 'GMN', puntos: 5500, fecha: 'STASIS' },
 ];
 
 interface EnemigoOItem {
@@ -97,8 +91,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     audioHabilitado: true,
   });
 
-  // Cargar tabla de récords de localStorage
+  // Cargar tabla de récords desde API global (con fallback a localStorage)
   useEffect(() => {
+    // 1. Cargar cache local inmediata para no parpadear
     try {
       const guardados = localStorage.getItem('hl3_fichines_records');
       if (guardados) {
@@ -111,22 +106,39 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     } catch {
       // Ignorar restricciones locales
     }
+
+    // 2. Sincronizar en tiempo real con el Top global de Postgres
+    fetch('/api/records')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data.records) && data.records.length > 0) {
+          setTablaRecords(data.records);
+          setRecord(data.records[0].puntos);
+          try {
+            localStorage.setItem('hl3_fichines_records', JSON.stringify(data.records));
+          } catch {
+            // Ignorar
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Usando records locales:', err);
+      });
   }, []);
 
-  // Guardar nuevo puntaje en el Hall of Fame de Fichines
-  function guardarNuevoRecord() {
+  // Guardar nuevo puntaje en el Hall of Fame de Fichines (local + global)
+  async function guardarNuevoRecord() {
     const tagLimpio = (tagJugador.trim() || 'FRE').toUpperCase().slice(0, 3);
-    const armaIcono = armaActual === 'escopeta' ? '💥' : armaActual === 'pistola' ? '🔫' : '🔨';
     const nuevaEntrada: RecordFichero = {
       tag: tagLimpio,
       puntos: puntos,
-      arma: armaIcono,
-      sector: 'SEC-C',
+      fecha: 'HOY',
     };
 
+    // Actualización optimista inmediata
     const nuevaLista = [...tablaRecords, nuevaEntrada]
       .sort((a, b) => b.puntos - a.puntos)
-      .slice(0, 6);
+      .slice(0, 10);
 
     setTablaRecords(nuevaLista);
     setRecord(nuevaLista[0].puntos);
@@ -136,6 +148,29 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       localStorage.setItem('hl3_fichines_records', JSON.stringify(nuevaLista));
     } catch {
       // Ignorar
+    }
+
+    // Persistencia global en Neon Postgres
+    try {
+      const res = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tag: tagLimpio, puntos }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.records) && data.records.length > 0) {
+          setTablaRecords(data.records);
+          setRecord(data.records[0].puntos);
+          try {
+            localStorage.setItem('hl3_fichines_records', JSON.stringify(data.records));
+          } catch {
+            // Ignorar
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('No se pudo sincronizar el récord globalmente:', e);
     }
   }
 
@@ -1111,11 +1146,10 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           </div>
 
           <div className="space-y-1.5 text-xs">
-            <div className="grid grid-cols-[30px_1fr_60px_24px] text-[10px] text-zinc-500 font-bold border-b border-zinc-900 pb-1 px-1">
+            <div className="grid grid-cols-[34px_1fr_80px] text-[10px] text-zinc-500 font-bold border-b border-zinc-900 pb-1 px-1">
               <span>POS</span>
               <span>NAME</span>
               <span className="text-right">SCORE</span>
-              <span className="text-right">GUN</span>
             </div>
 
             {tablaRecords.map((r, idx) => {
@@ -1126,7 +1160,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
               return (
                 <div
                   key={`${r.tag}-${idx}`}
-                  className={`grid grid-cols-[30px_1fr_60px_24px] items-center px-1.5 py-1.5 rounded-lg border transition-all ${
+                  className={`grid grid-cols-[34px_1fr_80px] items-center px-2 py-1.5 rounded-lg border transition-all ${
                     esPrimero
                       ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 font-bold'
                       : esSegundo
@@ -1142,15 +1176,13 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
                   <span className="tracking-widest font-bold flex items-center gap-1.5">
                     <span className={esPrimero ? 'text-amber-300' : 'text-orange-400'}>{r.tag}</span>
-                    <span className="text-[9px] text-zinc-600 font-normal">({r.sector})</span>
+                    {r.fecha ? (
+                      <span className="text-[9px] text-zinc-600 font-normal">({r.fecha})</span>
+                    ) : null}
                   </span>
 
-                  <span className="text-right font-bold text-[11px] text-zinc-100">
+                  <span className="text-right font-bold text-[12px] text-zinc-100">
                     {r.puntos.toLocaleString()}
-                  </span>
-
-                  <span className="text-right text-xs" title="Arma favorita">
-                    {r.arma}
                   </span>
                 </div>
               );
@@ -1160,8 +1192,8 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           <div className="mt-4 pt-3 border-t border-zinc-900 text-center">
             <p className="text-[10px] text-zinc-500">
               {esIngles
-                ? '★ Insert your 3-letter initials upon Game Over to enter the arcade leaderboard.'
-                : '★ Ingresa tus 3 iniciales al terminar la partida para entrar al podio de fichines.'}
+                ? '★ Global online leaderboard. Insert your 3-letter initials upon Game Over to enter.'
+                : '★ Podio online global. Ingresa tus 3 iniciales al terminar la partida para clasificar.'}
             </p>
           </div>
         </div>
