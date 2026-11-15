@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const tag = typeof body.tag === 'string' ? body.tag.trim().slice(0, 3) : 'FRE';
-    const puntos = typeof body.puntos === 'number' ? Math.floor(body.puntos) : 0;
+    const puntos = Math.floor(Number(body.puntos) || 0);
 
     if (puntos <= 0) {
       return NextResponse.json({ error: 'Puntaje inválido' }, { status: 400 });
