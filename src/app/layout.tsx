@@ -62,6 +62,18 @@ export const metadata: Metadata = {
     description:
       'Verificador diario contra Steam, noticias de Half-Life 3 y Altar de Plegarias a Gabe Newell.',
   },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icon-512.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
+  manifest: '/manifest.json',
   other: {
     'google-adsense-account': 'ca-pub-4665232577336299',
   },
