@@ -110,10 +110,15 @@ async function asegurarTablasPostgres() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS records_arcade (
       id SERIAL PRIMARY KEY,
-      tag VARCHAR(3) NOT NULL,
+      tag VARCHAR(5) NOT NULL,
       puntos INT NOT NULL,
       fecha TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+  `);
+
+  // Migrar columna existente de VARCHAR(3) a VARCHAR(5) si la tabla ya existía
+  await pool.query(`
+    ALTER TABLE records_arcade ALTER COLUMN tag TYPE VARCHAR(5);
   `);
 
   const resRecords = await pool.query('SELECT COUNT(*)::int AS cantidad FROM records_arcade');
@@ -365,7 +370,7 @@ export async function obtenerRecordsArcadeDB(limite = 10): Promise<RecordFichero
  * y retorna la lista actualizada de los mejores récords.
  */
 export async function guardarRecordArcadeDB(tag: string, puntos: number): Promise<RecordFichero[]> {
-  const tagLimpio = (tag.trim() || 'FRE').toUpperCase().slice(0, 3);
+  const tagLimpio = (tag.trim() || 'FREEM').toUpperCase().slice(0, 5);
   const puntosSeguros = Math.max(0, Math.min(Math.floor(puntos), 999999));
 
   try {

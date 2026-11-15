@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
-    const tag = typeof body.tag === 'string' ? body.tag.trim().slice(0, 3) : 'FRE';
+    const tag = typeof body.tag === 'string' ? body.tag.trim().slice(0, 5) : 'FREEM';
     const puntos = Math.floor(Number(body.puntos) || 0);
 
     if (puntos <= 0) {

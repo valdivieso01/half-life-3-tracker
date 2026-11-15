@@ -236,7 +236,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
   // Guardar nuevo puntaje en el Hall of Fame de Fichines (local + global)
   async function guardarNuevoRecord() {
-    const tagLimpio = (tagJugador.trim() || 'FRE').toUpperCase().slice(0, 3);
+    const tagLimpio = (tagJugador.trim() || 'FREEM').toUpperCase().slice(0, 5);
     const nuevaEntrada: RecordFichero = {
       tag: tagLimpio,
       puntos: puntos,
@@ -1426,20 +1426,20 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
                   <p className="text-2xl font-bold text-orange-400">{puntos.toLocaleString()}</p>
                 </div>
 
-                {/* Ingreso de iniciales (3 letras estilo Fichín / Arcade) */}
+                {/* Ingreso de iniciales (5 letras estilo Fichín / Arcade) */}
                 {puntos > 0 && !recordGuardado ? (
                   <div className="bg-zinc-900 border border-orange-500/50 rounded-xl p-4 mb-4 max-w-xs w-full shadow-lg">
                     <p className="text-orange-400 font-mono text-xs font-bold mb-2">
-                      ⭐ {esIngles ? 'ENTER YOUR INITIALS (3 LETTERS):' : '¡INGRESA TUS 3 INICIALES!'} ⭐
+                      ⭐ {esIngles ? 'ENTER YOUR TAG (MAX 5 LETTERS):' : '¡INGRESA TU TAG (HASTA 5 LETRAS)!'} ⭐
                     </p>
                     <div className="flex items-center justify-center gap-2 mb-3">
                       <input
                         type="text"
-                        maxLength={3}
+                        maxLength={5}
                         value={tagJugador}
-                        placeholder="GFM"
+                        placeholder="FREEM"
                         onChange={(e) => setTagJugador(e.target.value.toUpperCase())}
-                        className="w-28 text-center uppercase tracking-widest font-mono text-xl font-bold bg-zinc-950 border border-orange-500 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-36 text-center uppercase tracking-widest font-mono text-xl font-bold bg-zinc-950 border border-orange-500 rounded-lg px-2 py-1.5 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
                       />
                       <button
                         onClick={guardarNuevoRecord}
@@ -1525,8 +1525,8 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           <div className="mt-4 pt-3 border-t border-zinc-900 text-center">
             <p className="text-[10px] text-zinc-500">
               {esIngles
-                ? '★ Global online leaderboard. Insert your 3-letter initials upon Game Over to enter.'
-                : '★ Podio online global. Ingresa tus 3 iniciales al terminar la partida para clasificar.'}
+                ? '★ Global online leaderboard. Insert up to 5 letters upon Game Over to enter.'
+                : '★ Podio online global. Ingresa hasta 5 letras al terminar la partida para clasificar.'}
             </p>
           </div>
         </div>
