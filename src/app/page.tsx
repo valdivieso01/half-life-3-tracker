@@ -14,7 +14,7 @@ import { RadioBlackMesa } from '@/components/RadioBlackMesa';
 import { ArcadeHalfLife } from '@/components/ArcadeHalfLife';
 import { ARTICULOS_EDITORIALES } from '@/lib/articulos';
 import Link from 'next/link';
-import { Idioma, TRADUCCIONES } from '@/lib/i18n';
+import { Idioma, TRADUCCIONES, obtenerIdiomaInicial, guardarIdioma } from '@/lib/i18n';
 
 type SeccionActiva = 'inicio' | 'noticias' | 'juegos' | 'timeline' | 'fuentes' | 'arcade';
 
@@ -40,15 +40,15 @@ export default function HomePage() {
     (Date.now() - fechaEpisodeTwo) / (1000 * 60 * 60 * 24)
   );
 
-  // Detectar idioma del navegador al entrar por primera vez
+  // Cargar idioma guardado en localStorage o detectar idioma del navegador
   useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      navigator.language?.toLowerCase().startsWith('en')
-    ) {
-      setIdioma('en');
-    }
+    setIdioma(obtenerIdiomaInicial());
   }, []);
+
+  const cambiarIdioma = (nuevoIdioma: Idioma) => {
+    setIdioma(nuevoIdioma);
+    guardarIdioma(nuevoIdioma);
+  };
 
   // Recargar noticias en el idioma seleccionado (ES o EN) con cancelación
   useEffect(() => {
@@ -207,7 +207,7 @@ export default function HomePage() {
 
           <div className="inline-flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
             <button
-              onClick={() => setIdioma('es')}
+              onClick={() => cambiarIdioma('es')}
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
                 idioma === 'es'
                   ? 'bg-orange-600 text-white'
@@ -217,7 +217,7 @@ export default function HomePage() {
               ES
             </button>
             <button
-              onClick={() => setIdioma('en')}
+              onClick={() => cambiarIdioma('en')}
               className={`text-xs font-semibold px-3 py-1.5 rounded-lg cursor-pointer transition-colors ${
                 idioma === 'en'
                   ? 'bg-orange-600 text-white'

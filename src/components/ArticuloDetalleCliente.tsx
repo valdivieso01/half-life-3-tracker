@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArticuloHL3 } from '@/lib/articulos';
-import { Idioma } from '@/lib/i18n';
+import { Idioma, obtenerIdiomaInicial, guardarIdioma } from '@/lib/i18n';
 
 interface ArticuloDetalleClienteProps {
   articulo: ArticuloHL3;
@@ -12,15 +12,15 @@ interface ArticuloDetalleClienteProps {
 export function ArticuloDetalleCliente({ articulo }: ArticuloDetalleClienteProps) {
   const [idioma, setIdioma] = useState<Idioma>('es');
 
-  // Detectar idioma inicial si el navegador está en inglés
+  // Cargar idioma guardado en localStorage o detectar idioma del navegador
   useEffect(() => {
-    if (
-      typeof window !== 'undefined' &&
-      navigator.language?.toLowerCase().startsWith('en')
-    ) {
-      setIdioma('en');
-    }
+    setIdioma(obtenerIdiomaInicial());
   }, []);
+
+  const cambiarIdioma = (nuevoIdioma: Idioma) => {
+    setIdioma(nuevoIdioma);
+    guardarIdioma(nuevoIdioma);
+  };
 
   const t = articulo[idioma];
 
@@ -38,7 +38,7 @@ export function ArticuloDetalleCliente({ articulo }: ArticuloDetalleClienteProps
         {/* Selector de idioma ES / EN para el artículo */}
         <div className="inline-flex items-center bg-zinc-900 border border-zinc-800 rounded-xl p-1 gap-1">
           <button
-            onClick={() => setIdioma('es')}
+            onClick={() => cambiarIdioma('es')}
             className={`text-xs font-semibold px-3 py-1 rounded-lg cursor-pointer transition-colors ${
               idioma === 'es'
                 ? 'bg-orange-600 text-white'
@@ -48,7 +48,7 @@ export function ArticuloDetalleCliente({ articulo }: ArticuloDetalleClienteProps
             ES
           </button>
           <button
-            onClick={() => setIdioma('en')}
+            onClick={() => cambiarIdioma('en')}
             className={`text-xs font-semibold px-3 py-1 rounded-lg cursor-pointer transition-colors ${
               idioma === 'en'
                 ? 'bg-orange-600 text-white'

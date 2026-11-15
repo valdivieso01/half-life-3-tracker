@@ -1,5 +1,31 @@
 export type Idioma = 'es' | 'en';
 
+const CLAVE_IDIOMA_STORAGE = 'hl3_idioma';
+
+/** Obtiene el idioma guardado en localStorage o detecta el del navegador. */
+export function obtenerIdiomaInicial(): Idioma {
+  if (typeof window === 'undefined') return 'es';
+  try {
+    const guardado = window.localStorage.getItem(CLAVE_IDIOMA_STORAGE);
+    if (guardado === 'es' || guardado === 'en') {
+      return guardado;
+    }
+  } catch {
+    // Ignorar errores de acceso a localStorage (ej. modo privado estricto)
+  }
+  return navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'es';
+}
+
+/** Persiste el idioma seleccionado en localStorage. */
+export function guardarIdioma(idioma: Idioma): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CLAVE_IDIOMA_STORAGE, idioma);
+  } catch {
+    // Ignorar errores de escritura en localStorage
+  }
+}
+
 export const TRADUCCIONES = {
   es: {
     tituloPrincipal: 'Radar Black Mesa de',
