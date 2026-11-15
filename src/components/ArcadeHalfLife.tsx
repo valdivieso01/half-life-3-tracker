@@ -692,7 +692,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         const item = ref.enemigos[i];
         const dist = Math.hypot(item.x - mx, item.y - my);
         if (dist <= item.radius + 16) {
-          procesarImpactoEnItem(item, i, 1, 2.5);
+          procesarImpactoEnItem(item, i, 2, 2.5);
           break;
         }
       }
@@ -712,7 +712,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         const item = ref.enemigos[i];
         const dist = Math.hypot(item.x - mx, item.y - my);
         if (dist <= radioEscopeta) {
-          procesarImpactoEnItem(item, i, 2, 4.0);
+          procesarImpactoEnItem(item, i, 4, 4.0);
         }
       }
     }
