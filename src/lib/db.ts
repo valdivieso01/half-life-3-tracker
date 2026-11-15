@@ -38,11 +38,11 @@ export const PLEGARIAS_FALLBACK_DEFAULT: Plegaria[] = [
 ];
 
 export const RECORDS_ARCADE_DEFAULT: RecordFichero[] = [
-  { id: 1, tag: 'GAB', puntos: 15200, fecha: 'VALVE' },
-  { id: 2, tag: 'GFM', puntos: 12400, fecha: 'HEV-4' },
-  { id: 3, tag: 'BAR', puntos: 9800, fecha: 'SEC-C' },
-  { id: 4, tag: 'ALY', puntos: 7600, fecha: 'CIT17' },
-  { id: 5, tag: 'GMN', puntos: 5500, fecha: 'STASIS' },
+  { id: 1, tag: 'GABEN', puntos: 15200, fecha: 'VALVE' },
+  { id: 2, tag: 'FREEM', puntos: 12400, fecha: 'HEV-4' },
+  { id: 3, tag: 'BARNY', puntos: 9800, fecha: 'SEC-C' },
+  { id: 4, tag: 'ALYXV', puntos: 7600, fecha: 'CIT17' },
+  { id: 5, tag: 'G-MAN', puntos: 5500, fecha: 'STASIS' },
 ];
 
 let tablasInicializadas = false;
@@ -126,11 +126,21 @@ async function asegurarTablasPostgres() {
     await pool.query(`
       INSERT INTO records_arcade (tag, puntos)
       VALUES 
-        ('GAB', 15200),
-        ('GFM', 12400),
-        ('BAR', 9800),
-        ('ALY', 7600),
-        ('GMN', 5500);
+        ('GABEN', 15200),
+        ('FREEM', 12400),
+        ('BARNY', 9800),
+        ('ALYXV', 7600),
+        ('G-MAN', 5500);
+    `);
+  } else {
+    // Actualizar tags semilla antiguos de 3 letras a 5 letras y limpiar registro de prueba
+    await pool.query(`
+      UPDATE records_arcade SET tag = 'GABEN' WHERE tag = 'GAB';
+      UPDATE records_arcade SET tag = 'FREEM' WHERE tag = 'GFM';
+      UPDATE records_arcade SET tag = 'BARNY' WHERE tag = 'BAR';
+      UPDATE records_arcade SET tag = 'ALYXV' WHERE tag = 'ALY';
+      UPDATE records_arcade SET tag = 'G-MAN' WHERE tag = 'GMN';
+      DELETE FROM records_arcade WHERE tag = 'FRE' AND puntos = 13500;
     `);
   }
 

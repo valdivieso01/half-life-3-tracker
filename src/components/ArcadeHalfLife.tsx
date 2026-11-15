@@ -46,7 +46,7 @@ const NIVELES_ARCADE: ConfigNivel[] = [
   },
   {
     nivel: 2,
-    minPuntos: 500,
+    minPuntos: 2000,
     nombreEs: 'Túneles & Vortigaunts',
     nombreEn: 'Tunnels & Vortigaunts',
     banner: 'BLACK MESA // SECTOR D // VORTIGAUNT INVASION',
@@ -55,7 +55,7 @@ const NIVELES_ARCADE: ConfigNivel[] = [
   },
   {
     nivel: 3,
-    minPuntos: 1500,
+    minPuntos: 5000,
     nombreEs: 'Amenaza Militar (HECU)',
     nombreEn: "We've Got Hostiles (HECU)",
     banner: 'ALERT // WE\'VE GOT HOSTILES // HECU & MANHACKS',
@@ -64,7 +64,7 @@ const NIVELES_ARCADE: ConfigNivel[] = [
   },
   {
     nivel: 4,
-    minPuntos: 3000,
+    minPuntos: 9000,
     nombreEs: 'Xen: Mundo Fronterizo',
     nombreEn: 'Xen: Borderworld',
     banner: 'XEN // BORDERWORLD // ALIEN GRUNT ASSAULT',
@@ -73,7 +73,7 @@ const NIVELES_ARCADE: ConfigNivel[] = [
   },
   {
     nivel: 5,
-    minPuntos: 5000,
+    minPuntos: 14000,
     nombreEs: 'La Ciudadela (Overwatch)',
     nombreEn: 'The Citadel (Overwatch)',
     banner: 'CITADEL // OVERWATCH ELITE // NIHILANTH THREAT',
@@ -102,23 +102,23 @@ interface StatEnemigo {
 }
 
 const STATS_ENEMIGOS: Record<Exclude<TipoEntidad, 'caja' | 'medkit' | 'municion'>, StatEnemigo> = {
-  normal: { vida: 1, radio: 18, puntos: 100, dano: 15, vy: 2.0, vxMax: 2.0, colorSangre: '#f97316' },
-  fast: { vida: 1, radio: 16, puntos: 200, dano: 20, vy: 3.3, vxMax: 4.0, colorSangre: '#fb923c' },
-  poison: { vida: 2, radio: 21, puntos: 300, dano: 28, vy: 1.9, vxMax: 1.8, colorSangre: '#a855f7' },
-  vortigaunt: { vida: 2, radio: 23, puntos: 350, dano: 25, vy: 2.1, vxMax: 2.4, colorSangre: '#22c55e' },
-  manhack: { vida: 1, radio: 15, puntos: 250, dano: 18, vy: 3.1, vxMax: 5.5, colorSangre: '#ef4444' },
-  hecu: { vida: 3, radio: 24, puntos: 450, dano: 30, vy: 1.8, vxMax: 1.6, colorSangre: '#ef4444' },
-  grunt: { vida: 4, radio: 27, puntos: 600, dano: 35, vy: 1.6, vxMax: 1.5, colorSangre: '#c084fc' },
-  combine: { vida: 4, radio: 24, puntos: 700, dano: 35, vy: 2.2, vxMax: 2.6, colorSangre: '#38bdf8' },
-  boss: { vida: 10, radio: 42, puntos: 1200, dano: 50, vy: 0.9, vxMax: 1.4, colorSangre: '#facc15' },
+  normal: { vida: 1, radio: 18, puntos: 40, dano: 15, vy: 2.0, vxMax: 2.0, colorSangre: '#f97316' },
+  fast: { vida: 1, radio: 16, puntos: 75, dano: 20, vy: 3.3, vxMax: 4.0, colorSangre: '#fb923c' },
+  poison: { vida: 2, radio: 21, puntos: 120, dano: 28, vy: 1.9, vxMax: 1.8, colorSangre: '#a855f7' },
+  vortigaunt: { vida: 2, radio: 23, puntos: 150, dano: 25, vy: 2.1, vxMax: 2.4, colorSangre: '#22c55e' },
+  manhack: { vida: 1, radio: 15, puntos: 90, dano: 18, vy: 3.1, vxMax: 5.5, colorSangre: '#ef4444' },
+  hecu: { vida: 3, radio: 24, puntos: 200, dano: 30, vy: 1.8, vxMax: 1.6, colorSangre: '#ef4444' },
+  grunt: { vida: 4, radio: 27, puntos: 260, dano: 35, vy: 1.6, vxMax: 1.5, colorSangre: '#c084fc' },
+  combine: { vida: 4, radio: 24, puntos: 320, dano: 35, vy: 2.2, vxMax: 2.6, colorSangre: '#38bdf8' },
+  boss: { vida: 10, radio: 42, puntos: 600, dano: 50, vy: 0.9, vxMax: 1.4, colorSangre: '#facc15' },
 };
 
 const RECORDS_POR_DEFECTO: RecordFichero[] = [
-  { tag: 'GAB', puntos: 15200, fecha: 'VALVE' },
-  { tag: 'GFM', puntos: 12400, fecha: 'HEV-4' },
-  { tag: 'BAR', puntos: 9800, fecha: 'SEC-C' },
-  { tag: 'ALY', puntos: 7600, fecha: 'CIT17' },
-  { tag: 'GMN', puntos: 5500, fecha: 'STASIS' },
+  { tag: 'GABEN', puntos: 15200, fecha: 'VALVE' },
+  { tag: 'FREEM', puntos: 12400, fecha: 'HEV-4' },
+  { tag: 'BARNY', puntos: 9800, fecha: 'SEC-C' },
+  { tag: 'ALYXV', puntos: 7600, fecha: 'CIT17' },
+  { tag: 'G-MAN', puntos: 5500, fecha: 'STASIS' },
 ];
 
 interface EnemigoOItem {
@@ -593,7 +593,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         }
         ref.ultimoGolpeCombo = ahora;
 
-        const puntosGanados = stats.puntos * Math.min(ref.combo, 5);
+        const puntosGanados = stats.puntos * Math.min(ref.combo, 3);
         ref.puntos += puntosGanados;
         setPuntos(ref.puntos);
         setCombo(ref.combo);
