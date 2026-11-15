@@ -10,6 +10,109 @@ interface ArcadeHalfLifeProps {
 
 type TipoArma = 'palanca' | 'pistola' | 'escopeta';
 
+type TipoEntidad =
+  | 'normal'
+  | 'fast'
+  | 'poison'
+  | 'vortigaunt'
+  | 'manhack'
+  | 'hecu'
+  | 'grunt'
+  | 'combine'
+  | 'boss'
+  | 'medkit'
+  | 'caja'
+  | 'municion';
+
+interface ConfigNivel {
+  nivel: number;
+  minPuntos: number;
+  nombreEs: string;
+  nombreEn: string;
+  banner: string;
+  colorTema: string;
+  intervaloBase: number;
+}
+
+const NIVELES_ARCADE: ConfigNivel[] = [
+  {
+    nivel: 1,
+    minPuntos: 0,
+    nombreEs: 'Sector C: Materiales Anómalos',
+    nombreEn: 'Sector C: Anomalous Materials',
+    banner: 'BLACK MESA // SECTOR C // ANOMALOUS MATERIALS',
+    colorTema: '#ea580c',
+    intervaloBase: 1750,
+  },
+  {
+    nivel: 2,
+    minPuntos: 500,
+    nombreEs: 'Túneles & Vortigaunts',
+    nombreEn: 'Tunnels & Vortigaunts',
+    banner: 'BLACK MESA // SECTOR D // VORTIGAUNT INVASION',
+    colorTema: '#10b981',
+    intervaloBase: 1450,
+  },
+  {
+    nivel: 3,
+    minPuntos: 1500,
+    nombreEs: 'Amenaza Militar (HECU)',
+    nombreEn: "We've Got Hostiles (HECU)",
+    banner: 'ALERT // WE\'VE GOT HOSTILES // HECU & MANHACKS',
+    colorTema: '#eab308',
+    intervaloBase: 1200,
+  },
+  {
+    nivel: 4,
+    minPuntos: 3000,
+    nombreEs: 'Xen: Mundo Fronterizo',
+    nombreEn: 'Xen: Borderworld',
+    banner: 'XEN // BORDERWORLD // ALIEN GRUNT ASSAULT',
+    colorTema: '#a855f7',
+    intervaloBase: 1000,
+  },
+  {
+    nivel: 5,
+    minPuntos: 5000,
+    nombreEs: 'La Ciudadela (Overwatch)',
+    nombreEn: 'The Citadel (Overwatch)',
+    banner: 'CITADEL // OVERWATCH ELITE // NIHILANTH THREAT',
+    colorTema: '#ef4444',
+    intervaloBase: 820,
+  },
+];
+
+function obtenerNivelPorPuntos(puntos: number): ConfigNivel {
+  for (let i = NIVELES_ARCADE.length - 1; i >= 0; i--) {
+    if (puntos >= NIVELES_ARCADE[i].minPuntos) {
+      return NIVELES_ARCADE[i];
+    }
+  }
+  return NIVELES_ARCADE[0];
+}
+
+interface StatEnemigo {
+  vida: number;
+  radio: number;
+  puntos: number;
+  dano: number;
+  vy: number;
+  vxMax: number;
+  colorSangre: string;
+}
+
+const STATS_ENEMIGOS: Record<Exclude<TipoEntidad, 'caja' | 'medkit' | 'municion'>, StatEnemigo> = {
+  normal: { vida: 1, radio: 18, puntos: 100, dano: 15, vy: 2.0, vxMax: 2.0, colorSangre: '#f97316' },
+  fast: { vida: 1, radio: 16, puntos: 200, dano: 20, vy: 3.3, vxMax: 4.0, colorSangre: '#fb923c' },
+  poison: { vida: 2, radio: 21, puntos: 300, dano: 28, vy: 1.9, vxMax: 1.8, colorSangre: '#a855f7' },
+  vortigaunt: { vida: 2, radio: 23, puntos: 350, dano: 25, vy: 2.1, vxMax: 2.4, colorSangre: '#22c55e' },
+  manhack: { vida: 1, radio: 15, puntos: 250, dano: 18, vy: 3.1, vxMax: 5.5, colorSangre: '#ef4444' },
+  hecu: { vida: 3, radio: 24, puntos: 450, dano: 30, vy: 1.8, vxMax: 1.6, colorSangre: '#ef4444' },
+  grunt: { vida: 4, radio: 27, puntos: 600, dano: 35, vy: 1.6, vxMax: 1.5, colorSangre: '#c084fc' },
+  combine: { vida: 4, radio: 24, puntos: 700, dano: 35, vy: 2.2, vxMax: 2.6, colorSangre: '#38bdf8' },
+  boss: { vida: 10, radio: 42, puntos: 1200, dano: 50, vy: 0.9, vxMax: 1.4, colorSangre: '#facc15' },
+};
+
 const RECORDS_POR_DEFECTO: RecordFichero[] = [
   { tag: 'GAB', puntos: 15200, fecha: 'VALVE' },
   { tag: 'GFM', puntos: 12400, fecha: 'HEV-4' },
@@ -25,11 +128,12 @@ interface EnemigoOItem {
   vx: number;
   vy: number;
   radius: number;
-  tipo: 'normal' | 'fast' | 'poison' | 'medkit' | 'caja' | 'municion';
+  tipo: TipoEntidad;
   vida: number;
   maxVida: number;
   rotacion: number;
   rotSpeed: number;
+  faseZigzag?: number;
 }
 
 interface Particula {
@@ -50,6 +154,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   const [jugando, setJugando] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [puntos, setPuntos] = useState(0);
+  const [nivelActual, setNivelActual] = useState(1);
   const [record, setRecord] = useState(15200);
   const [salud, setSalud] = useState(100);
   const [combo, setCombo] = useState(0);
@@ -75,6 +180,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     jugando: false,
     gameOver: false,
     puntos: 0,
+    nivel: 1,
+    alertaNivelTimer: 0,
+    alertaNivelTexto: '',
     salud: 100,
     combo: 0,
     ultimoGolpeCombo: 0,
@@ -197,7 +305,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
   // Sintetizador de audio retro
   const reproducirSonido = useCallback(
-    (tipo: 'palanca' | 'pistola' | 'escopeta' | 'sin_balas' | 'impacto' | 'salto' | 'medkit' | 'caja' | 'dano' | 'flatline') => {
+    (tipo: 'palanca' | 'pistola' | 'escopeta' | 'sin_balas' | 'impacto' | 'salto' | 'medkit' | 'caja' | 'dano' | 'flatline' | 'levelup' | 'boss') => {
       const ctx = obtenerAudioContext();
       if (!ctx) return;
       const ahora = ctx.currentTime;
@@ -329,6 +437,33 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         gain.connect(ctx.destination);
         osc.start(ahora);
         osc.stop(ahora + 1.55);
+      } else if (tipo === 'levelup') {
+        const notas = [440, 554, 659, 880];
+        notas.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'triangle';
+          const t = ahora + idx * 0.08;
+          osc.frequency.setValueAtTime(freq, t);
+          gain.gain.setValueAtTime(0.2, t);
+          gain.gain.exponentialRampToValueAtTime(0.01, t + 0.14);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(t);
+          osc.stop(t + 0.15);
+        });
+      } else if (tipo === 'boss') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(110, ahora);
+        osc.frequency.exponentialRampToValueAtTime(55, ahora + 0.45);
+        gain.gain.setValueAtTime(0.32, ahora);
+        gain.gain.exponentialRampToValueAtTime(0.01, ahora + 0.48);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ahora);
+        osc.stop(ahora + 0.5);
       }
     },
     [obtenerAudioContext]
@@ -348,6 +483,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       jugando: true,
       gameOver: false,
       puntos: 0,
+      nivel: 1,
+      alertaNivelTimer: 150,
+      alertaNivelTexto: esIngles ? 'LEVEL 1: SECTOR C' : 'NIVEL 1: SECTOR C',
       salud: 100,
       combo: 0,
       ultimoGolpeCombo: Date.now(),
@@ -364,6 +502,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       audioHabilitado,
     };
     setPuntos(0);
+    setNivelActual(1);
     setSalud(100);
     setCombo(0);
     setArmaActual('palanca');
@@ -393,6 +532,124 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
     }
   }
 
+  // Procesar impacto unificado para cualquier arma sobre ítems o enemigos
+  const procesarImpactoEnItem = useCallback(
+    (item: EnemigoOItem, index: number, dano: number, retrocesoY: number) => {
+      const ref = estadoRef.current;
+
+      if (item.tipo === 'caja') {
+        reproducirSonido('caja');
+        crearExplosion(item.x, item.y, '#d97706', 15);
+        const esMedkit = Math.random() > 0.5;
+        ref.enemigos.push({
+          id: ref.idContador++,
+          x: item.x,
+          y: item.y,
+          vx: 0,
+          vy: 1.5,
+          radius: 14,
+          tipo: esMedkit ? 'medkit' : 'municion',
+          vida: 1,
+          maxVida: 1,
+          rotacion: 0,
+          rotSpeed: 0,
+        });
+        ref.enemigos.splice(index, 1);
+        return;
+      }
+
+      if (item.tipo === 'medkit') {
+        ref.salud = Math.min(100, ref.salud + 30);
+        setSalud(ref.salud);
+        reproducirSonido('medkit');
+        crearExplosion(item.x, item.y, '#10b981', 14);
+        ref.enemigos.splice(index, 1);
+        return;
+      }
+
+      if (item.tipo === 'municion') {
+        ref.balasPistola += 18;
+        ref.balasEscopeta += 6;
+        setBalasPistola(ref.balasPistola);
+        setBalasEscopeta(ref.balasEscopeta);
+        reproducirSonido('medkit');
+        crearExplosion(item.x, item.y, '#f59e0b', 14);
+        ref.enemigos.splice(index, 1);
+        return;
+      }
+
+      item.vida -= dano;
+      const stats = STATS_ENEMIGOS[item.tipo];
+
+      if (item.vida <= 0) {
+        reproducirSonido('impacto');
+        crearExplosion(item.x, item.y, stats.colorSangre, item.tipo === 'boss' ? 35 : 18);
+
+        const ahora = Date.now();
+        if (ahora - ref.ultimoGolpeCombo < 1800) {
+          ref.combo += 1;
+        } else {
+          ref.combo = 1;
+        }
+        ref.ultimoGolpeCombo = ahora;
+
+        const puntosGanados = stats.puntos * Math.min(ref.combo, 5);
+        ref.puntos += puntosGanados;
+        setPuntos(ref.puntos);
+        setCombo(ref.combo);
+
+        // Si derrotamos al jefe, suelta recompensa doble
+        if (item.tipo === 'boss') {
+          ref.enemigos.push({
+            id: ref.idContador++,
+            x: item.x - 18,
+            y: item.y,
+            vx: -0.6,
+            vy: 1.4,
+            radius: 14,
+            tipo: 'medkit',
+            vida: 1,
+            maxVida: 1,
+            rotacion: 0,
+            rotSpeed: 0,
+          });
+          ref.enemigos.push({
+            id: ref.idContador++,
+            x: item.x + 18,
+            y: item.y,
+            vx: 0.6,
+            vy: 1.4,
+            radius: 14,
+            tipo: 'municion',
+            vida: 1,
+            maxVida: 1,
+            rotacion: 0,
+            rotSpeed: 0,
+          });
+        }
+
+        // Verificar si subió de nivel
+        const nuevoNivel = obtenerNivelPorPuntos(ref.puntos);
+        if (nuevoNivel.nivel > ref.nivel) {
+          ref.nivel = nuevoNivel.nivel;
+          setNivelActual(nuevoNivel.nivel);
+          ref.alertaNivelTimer = 180;
+          ref.alertaNivelTexto = esIngles
+            ? `LEVEL ${nuevoNivel.nivel}: ${nuevoNivel.nombreEn.toUpperCase()}`
+            : `NIVEL ${nuevoNivel.nivel}: ${nuevoNivel.nombreEs.toUpperCase()}`;
+          reproducirSonido('levelup');
+        }
+
+        ref.enemigos.splice(index, 1);
+      } else {
+        reproducirSonido('impacto');
+        crearExplosion(item.x, item.y, '#eab308', 6);
+        item.vy = Math.max(-4, item.vy - retrocesoY);
+      }
+    },
+    [esIngles, reproducirSonido]
+  );
+
   // Disparo o golpe
   const dispararOAtacar = useCallback(() => {
     const ref = estadoRef.current;
@@ -410,94 +667,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       for (let i = ref.enemigos.length - 1; i >= 0; i--) {
         const item = ref.enemigos[i];
         const dist = Math.hypot(item.x - mx, item.y - my);
-
         if (dist <= radioAlcance + item.radius) {
           impacto = true;
-          item.vida -= 1;
-
-          if (item.tipo === 'caja') {
-            reproducirSonido('caja');
-            crearExplosion(item.x, item.y, '#d97706', 15);
-            if (Math.random() > 0.5) {
-              ref.enemigos.push({
-                id: ref.idContador++,
-                x: item.x,
-                y: item.y,
-                vx: 0,
-                vy: 1.5,
-                radius: 14,
-                tipo: 'medkit',
-                vida: 1,
-                maxVida: 1,
-                rotacion: 0,
-                rotSpeed: 0,
-              });
-            } else {
-              ref.enemigos.push({
-                id: ref.idContador++,
-                x: item.x,
-                y: item.y,
-                vx: 0,
-                vy: 1.5,
-                radius: 14,
-                tipo: 'municion',
-                vida: 1,
-                maxVida: 1,
-                rotacion: 0,
-                rotSpeed: 0,
-              });
-            }
-            ref.enemigos.splice(i, 1);
-            continue;
-          }
-
-          if (item.tipo === 'medkit') {
-            ref.salud = Math.min(100, ref.salud + 30);
-            setSalud(ref.salud);
-            reproducirSonido('medkit');
-            crearExplosion(item.x, item.y, '#10b981', 14);
-            ref.enemigos.splice(i, 1);
-            continue;
-          }
-
-          if (item.tipo === 'municion') {
-            ref.balasPistola += 18;
-            ref.balasEscopeta += 6;
-            setBalasPistola(ref.balasPistola);
-            setBalasEscopeta(ref.balasEscopeta);
-            reproducirSonido('medkit');
-            crearExplosion(item.x, item.y, '#f59e0b', 14);
-            ref.enemigos.splice(i, 1);
-            continue;
-          }
-
-          if (item.vida <= 0) {
-            reproducirSonido('impacto');
-            const sangre = item.tipo === 'poison' ? '#a855f7' : '#f97316';
-            crearExplosion(item.x, item.y, sangre, 18);
-
-            const ahora = Date.now();
-            if (ahora - ref.ultimoGolpeCombo < 1800) {
-              ref.combo += 1;
-            } else {
-              ref.combo = 1;
-            }
-            ref.ultimoGolpeCombo = ahora;
-
-            const puntosGanados =
-              (item.tipo === 'fast' ? 250 : item.tipo === 'poison' ? 350 : 100) *
-              Math.min(ref.combo, 5);
-
-            ref.puntos += puntosGanados;
-            setPuntos(ref.puntos);
-            setCombo(ref.combo);
-
-            ref.enemigos.splice(i, 1);
-          } else {
-            reproducirSonido('impacto');
-            crearExplosion(item.x, item.y, '#eab308', 6);
-            item.vy = -3;
-          }
+          procesarImpactoEnItem(item, i, 1, 2.5);
         }
       }
 
@@ -519,19 +691,8 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       for (let i = ref.enemigos.length - 1; i >= 0; i--) {
         const item = ref.enemigos[i];
         const dist = Math.hypot(item.x - mx, item.y - my);
-
-        if (dist <= item.radius + 15) {
-          item.vida -= 1;
-          if (item.vida <= 0) {
-            reproducirSonido('impacto');
-            crearExplosion(item.x, item.y, '#f97316', 16);
-            ref.puntos += 150;
-            setPuntos(ref.puntos);
-            ref.enemigos.splice(i, 1);
-          } else {
-            reproducirSonido('impacto');
-            item.vy = -3;
-          }
+        if (dist <= item.radius + 16) {
+          procesarImpactoEnItem(item, i, 1, 2.5);
           break;
         }
       }
@@ -546,26 +707,16 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
       reproducirSonido('escopeta');
       crearExplosion(mx, my, '#f97316', 20);
 
-      const radioEscopeta = 110;
+      const radioEscopeta = 115;
       for (let i = ref.enemigos.length - 1; i >= 0; i--) {
         const item = ref.enemigos[i];
         const dist = Math.hypot(item.x - mx, item.y - my);
-
         if (dist <= radioEscopeta) {
-          item.vida -= 2;
-          if (item.vida <= 0) {
-            reproducirSonido('impacto');
-            crearExplosion(item.x, item.y, '#ef4444', 20);
-            ref.puntos += 250;
-            setPuntos(ref.puntos);
-            ref.enemigos.splice(i, 1);
-          } else {
-            item.vy = -5;
-          }
+          procesarImpactoEnItem(item, i, 2, 4.0);
         }
       }
     }
-  }, [reproducirSonido]);
+  }, [procesarImpactoEnItem, reproducirSonido]);
 
   // Manejo de eventos
   useEffect(() => {
@@ -660,63 +811,106 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
         ctx.stroke();
       }
 
+      const nivelConfig = obtenerNivelPorPuntos(ref.puntos);
+
       ctx.fillStyle = '#1c2230';
       ctx.fillRect(0, 0, w, 24);
-      ctx.fillStyle = '#ea580c';
+      ctx.fillStyle = nivelConfig.colorTema;
       ctx.font = 'bold 10px monospace';
-      ctx.fillText('BLACK MESA RESEARCH FACILITY // SECTOR C // ANOMALOUS MATERIALS', 14, 16);
+      ctx.fillText(nivelConfig.banner, 14, 16);
 
       if (ref.jugando && !ref.gameOver) {
         const ahora = Date.now();
-        const intervaloSpawn = Math.max(650, 2000 - Math.floor(ref.puntos / 300) * 110);
+        const intervaloSpawn = Math.max(580, nivelConfig.intervaloBase - (ref.puntos % 1000) * 0.25);
 
         if (ahora - ref.ultimoSpawn > intervaloSpawn) {
           ref.ultimoSpawn = ahora;
           const azar = Math.random();
-          let tipo: EnemigoOItem['tipo'] = 'normal';
-          let maxVida = 1;
+          let tipo: TipoEntidad = 'normal';
 
           if (azar > 0.88) {
             tipo = 'caja';
-            maxVida = 1;
-          } else if (azar > 0.72) {
-            tipo = 'poison';
-            maxVida = 2;
-          } else if (azar > 0.45) {
-            tipo = 'fast';
+          } else if (nivelConfig.nivel === 1) {
+            tipo = azar > 0.58 ? 'fast' : 'normal';
+          } else if (nivelConfig.nivel === 2) {
+            if (azar > 0.68) tipo = 'vortigaunt';
+            else if (azar > 0.48) tipo = 'poison';
+            else if (azar > 0.24) tipo = 'fast';
+            else tipo = 'normal';
+          } else if (nivelConfig.nivel === 3) {
+            if (azar > 0.7) tipo = 'hecu';
+            else if (azar > 0.52) tipo = 'manhack';
+            else if (azar > 0.34) tipo = 'vortigaunt';
+            else if (azar > 0.16) tipo = 'poison';
+            else tipo = 'fast';
+          } else if (nivelConfig.nivel === 4) {
+            if (azar > 0.66) tipo = 'grunt';
+            else if (azar > 0.48) tipo = 'hecu';
+            else if (azar > 0.3) tipo = 'manhack';
+            else if (azar > 0.14) tipo = 'vortigaunt';
+            else tipo = 'poison';
+          } else {
+            const hayBoss = ref.enemigos.some((e) => e.tipo === 'boss');
+            if (!hayBoss && azar > 0.78) tipo = 'boss';
+            else if (azar > 0.54) tipo = 'combine';
+            else if (azar > 0.34) tipo = 'grunt';
+            else if (azar > 0.16) tipo = 'hecu';
+            else tipo = 'manhack';
           }
 
-          const radio = tipo === 'caja' ? 20 : tipo === 'poison' ? 22 : 18;
-          const spawnX = Math.random() * (w - 120) + 60;
-
-          ref.enemigos.push({
-            id: ref.idContador++,
-            x: spawnX,
-            y: 30,
-            vx: (Math.random() - 0.5) * (tipo === 'fast' ? 4.2 : 2.2),
-            vy: tipo === 'fast' ? 3.6 : 2.2,
-            radius: radio,
-            tipo,
-            vida: maxVida,
-            maxVida,
-            rotacion: 0,
-            rotSpeed: (Math.random() - 0.5) * 0.08,
-          });
-
-          if (tipo !== 'caja') {
-            reproducirSonido('salto');
+          if (tipo === 'caja') {
+            ref.enemigos.push({
+              id: ref.idContador++,
+              x: Math.random() * (w - 120) + 60,
+              y: 30,
+              vx: (Math.random() - 0.5) * 1.8,
+              vy: 2.0,
+              radius: 20,
+              tipo: 'caja',
+              vida: 1,
+              maxVida: 1,
+              rotacion: 0,
+              rotSpeed: (Math.random() - 0.5) * 0.06,
+            });
+          } else {
+            const stats = STATS_ENEMIGOS[tipo as Exclude<TipoEntidad, 'caja' | 'medkit' | 'municion'>];
+            const spawnX = Math.random() * (w - 140) + 70;
+            ref.enemigos.push({
+              id: ref.idContador++,
+              x: spawnX,
+              y: 32,
+              vx: (Math.random() - 0.5) * stats.vxMax,
+              vy: stats.vy,
+              radius: stats.radio,
+              tipo,
+              vida: stats.vida,
+              maxVida: stats.vida,
+              rotacion: 0,
+              rotSpeed: tipo === 'manhack' ? 0.25 : tipo === 'boss' || tipo === 'hecu' || tipo === 'combine' || tipo === 'grunt' || tipo === 'vortigaunt' ? 0 : (Math.random() - 0.5) * 0.08,
+              faseZigzag: Math.random() * Math.PI * 2,
+            });
+            reproducirSonido(tipo === 'boss' ? 'boss' : 'salto');
           }
         }
 
         // Dibujar y actualizar enemigos
         for (let i = ref.enemigos.length - 1; i >= 0; i--) {
           const item = ref.enemigos[i];
-          item.x += item.vx;
+          if (item.tipo === 'manhack') {
+            item.faseZigzag = (item.faseZigzag || 0) + 0.15;
+            item.x += Math.sin(item.faseZigzag) * 4.5 + item.vx * 0.3;
+          } else {
+            item.x += item.vx;
+          }
           item.y += item.vy;
           item.rotacion += item.rotSpeed;
 
-          if (item.x - item.radius < 0 || item.x + item.radius > w) {
-            item.vx *= -1;
+          if (item.x - item.radius < 0) {
+            item.x = item.radius;
+            item.vx = Math.abs(item.vx);
+          } else if (item.x + item.radius > w) {
+            item.x = w - item.radius;
+            item.vx = -Math.abs(item.vx);
           }
 
           ctx.save();
@@ -729,14 +923,12 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.lineWidth = 2;
             ctx.fillRect(-18, -18, 36, 36);
             ctx.strokeRect(-18, -18, 36, 36);
-
             ctx.beginPath();
             ctx.moveTo(-18, -18);
             ctx.lineTo(18, 18);
             ctx.moveTo(18, -18);
             ctx.lineTo(-18, 18);
             ctx.stroke();
-
             ctx.fillStyle = '#f59e0b';
             ctx.font = 'bold 12px monospace';
             ctx.fillText('λ', -4, 4);
@@ -762,7 +954,103 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             ctx.fillStyle = '#fde047';
             ctx.font = 'bold 9px monospace';
             ctx.fillText('AMMO', -12, 4);
+          } else if (item.tipo === 'vortigaunt') {
+            // Vortigaunt (verde con ojo rojo central y manos eléctricas)
+            ctx.fillStyle = '#14532d';
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(0, -4, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(-15, 6, 4, 0, Math.PI * 2);
+            ctx.arc(15, 6, 4, 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (item.tipo === 'manhack') {
+            // Manhack (dron sierra giratorio con luz roja)
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-16, 0);
+            ctx.lineTo(16, 0);
+            ctx.moveTo(0, -16);
+            ctx.lineTo(0, 16);
+            ctx.stroke();
+            ctx.fillStyle = '#334155';
+            ctx.beginPath();
+            ctx.arc(0, 0, 8, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (item.tipo === 'hecu') {
+            // Soldado HECU (casco táctico verde oliva + máscara antigás)
+            ctx.fillStyle = '#365314';
+            ctx.strokeStyle = '#84cc16';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.roundRect(-18, -20, 36, 40, 8);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(-12, -6, 24, 10);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(-8, -3, 6, 4);
+            ctx.fillRect(2, -3, 6, 4);
+          } else if (item.tipo === 'grunt') {
+            // Alien Grunt (armadura biológica púrpura/gris Xen)
+            ctx.fillStyle = '#4c1d95';
+            ctx.strokeStyle = '#c084fc';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(-7, -4, 3, 0, Math.PI * 2);
+            ctx.arc(7, -4, 3, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (item.tipo === 'combine') {
+            // Combine Elite (blanco/gris oscuro con visor cíclope rojo)
+            ctx.fillStyle = '#e2e8f0';
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(0, -2, 6, 0, Math.PI * 2);
+            ctx.fill();
+          } else if (item.tipo === 'boss') {
+            // Jefe Nihilanth (gran cerebro flotante dorado/púrpura con aura)
+            ctx.fillStyle = '#581c87';
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, item.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = '#fbbf24';
+            ctx.beginPath();
+            ctx.arc(0, -8, 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#ef4444';
+            ctx.beginPath();
+            ctx.arc(-12, 8, 5, 0, Math.PI * 2);
+            ctx.arc(12, 8, 5, 0, Math.PI * 2);
+            ctx.fill();
           } else {
+            // Headcrabs (normal, fast, poison)
             const colorCuerpo =
               item.tipo === 'poison' ? '#581c87' : item.tipo === 'fast' ? '#c2410c' : '#b45309';
             const colorPiel =
@@ -796,9 +1084,22 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
 
           ctx.restore();
 
+          // Barra de vida sobre enemigos resistentes (maxVida > 1)
+          if (item.maxVida > 1) {
+            const barW = Math.max(32, item.radius * 1.5);
+            const barH = 5;
+            const bx = item.x - barW / 2;
+            const by = item.y - item.radius - 12;
+            ctx.fillStyle = '#18181b';
+            ctx.fillRect(bx, by, barW, barH);
+            ctx.fillStyle = item.tipo === 'boss' ? '#facc15' : '#ef4444';
+            ctx.fillRect(bx, by, barW * (item.vida / item.maxVida), barH);
+          }
+
           if (item.y + item.radius >= h - 20) {
             if (item.tipo !== 'medkit' && item.tipo !== 'caja' && item.tipo !== 'municion') {
-              ref.salud = Math.max(0, ref.salud - (item.tipo === 'poison' ? 30 : 20));
+              const danoRecibido = STATS_ENEMIGOS[item.tipo].dano;
+              ref.salud = Math.max(0, ref.salud - danoRecibido);
               setSalud(ref.salud);
               reproducirSonido('dano');
               crearExplosion(item.x, h - 30, '#ef4444', 16);
@@ -812,6 +1113,29 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
             }
             ref.enemigos.splice(i, 1);
           }
+        }
+
+        // Banner animado de subida de nivel
+        if (ref.alertaNivelTimer > 0) {
+          ref.alertaNivelTimer -= 1;
+          ctx.save();
+          ctx.fillStyle = 'rgba(9, 9, 11, 0.85)';
+          ctx.strokeStyle = nivelConfig.colorTema;
+          ctx.lineWidth = 2;
+          const bw = 380;
+          const bh = 44;
+          const bx = (w - bw) / 2;
+          const by = 45;
+          ctx.beginPath();
+          ctx.roundRect(bx, by, bw, bh, 10);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = nivelConfig.colorTema;
+          ctx.font = 'bold 13px monospace';
+          ctx.textAlign = 'center';
+          ctx.fillText(`⚠ ${ref.alertaNivelTexto}`, w / 2, by + 27);
+          ctx.restore();
         }
 
         // Partículas
@@ -935,7 +1259,16 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 font-mono text-xs">
+        <div className="flex items-center gap-3 font-mono text-xs">
+          <span
+            className="font-bold px-2.5 py-1 rounded-lg border bg-zinc-900"
+            style={{
+              borderColor: NIVELES_ARCADE[nivelActual - 1]?.colorTema || '#ea580c',
+              color: NIVELES_ARCADE[nivelActual - 1]?.colorTema || '#ea580c',
+            }}
+          >
+            {esIngles ? `LVL ${nivelActual}` : `NIVEL ${nivelActual}`}
+          </span>
           <span className="text-zinc-500">HI-SCORE:</span>
           <span className="text-orange-400 font-bold text-sm bg-zinc-900 border border-zinc-800 px-3 py-1 rounded-lg">
             {record.toLocaleString()}
