@@ -1244,7 +1244,7 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
   }
 
   return (
-    <div className="w-full max-w-5xl mx-auto text-left space-y-6">
+    <div className="w-full max-w-7xl mx-auto text-left space-y-6">
       {/* Cabecera */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-800 pb-4 gap-4">
         <div>
@@ -1378,7 +1378,9 @@ export function ArcadeHalfLife({ idioma = 'es' }: ArcadeHalfLifeProps) {
               ref={canvasRef}
               width={800}
               height={480}
-              className="w-full max-h-[500px] object-contain block"
+              className={`w-full object-contain block ${
+                enPantallaCompleta ? 'max-h-[calc(100vh-110px)]' : 'max-h-[680px]'
+              }`}
             />
 
             {/* Pantalla inicial antes de jugar */}
